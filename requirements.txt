@@ -1,0 +1,9 @@
+flask
+gunicorn
+google-cloud-secret-manager
+google-cloud-logging
+pytz
+flask-sqlalchemy
+pymysql
+cryptography
+marshmallow-sqlalchemy
