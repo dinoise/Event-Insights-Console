@@ -9,6 +9,13 @@ class EventTypeController:
     @staticmethod
     def get_event_types() -> tuple:
         event_types = EventTypeService.get_all_event_types()
+        if not event_types:
+            return jsonify({
+                "status": 404,
+                "code": "error",
+                "data": []
+            }), 404
+        
         return jsonify({
             "status": 200,
             "code": "success",
