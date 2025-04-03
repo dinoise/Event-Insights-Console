@@ -2,7 +2,7 @@
 from models.event_type import EventType
 
 # Schemas
-from schemas.event_type_schemal import EventTypeSchema
+from schemas.event_type_schema import EventTypeSchema
 
 class EventTypeService:
 
