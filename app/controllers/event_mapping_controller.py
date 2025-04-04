@@ -19,10 +19,10 @@ class EventMappingController:
             }), HTTPStatus.BAD_REQUEST
         
         return jsonify({
-            "status": HTTPStatus.FOUND,
+            "status": HTTPStatus.OK,
             "code": "success",
             "data": mappings
-        }), HTTPStatus.FOUND
+        }), HTTPStatus.OK
     
     @staticmethod
     def post_event_mappings() -> tuple:
