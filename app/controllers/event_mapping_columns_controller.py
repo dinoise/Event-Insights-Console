@@ -235,3 +235,28 @@ class EventMappingColumnsController:
             "code": "success",
             "data": updated_column
         }), HTTPStatus.OK
+    
+    def delete_mapping_column(mapping_column_id) -> tuple[dict, int]:
+        try:
+            deleted_column = EventMappingColumnsService.delete_mapping_column(
+                mapping_column_id=mapping_column_id
+            )
+        except Exception as e:
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": f"Internal server error: {str(e)}"
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+
+        if not deleted_column:
+            return jsonify({
+                "status": HTTPStatus.NOT_FOUND,
+                "code": "success",
+                "message": "No mapping column for that mapping_column_id"
+            }), HTTPStatus.NOT_FOUND
+        
+
+        return jsonify({
+            "status": HTTPStatus.OK,
+            "code": "success"
+        }), HTTPStatus.OK

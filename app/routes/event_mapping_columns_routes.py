@@ -18,3 +18,7 @@ def post_mapping_columns_bulk():
 @bp.route('/<int:mapping_id>', methods=['PUT'])
 def update_mapping_column(mapping_id):
     return EventMappingColumnsController.update_mapping_column(mapping_id)
+
+@bp.route('/<int:mapping_id>', methods=['DELETE'])
+def delete_mapping_column(mapping_id):
+    return EventMappingColumnsController.delete_mapping_column(mapping_id)

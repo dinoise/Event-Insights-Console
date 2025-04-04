@@ -92,3 +92,19 @@ class EventMappingColumnsService:
         except Exception as e:
             db.session.rollback()
             raise Exception(f"Database error: {str(e)}")
+        
+    @staticmethod
+    def delete_mapping_column(mapping_column_id: int) -> Dict:
+        try:
+            column = EventMappingColumns.query.get(mapping_column_id)
+            if not column:
+                return None
+
+            setattr(column, "mapping_target_status", "INACTIVE")
+            
+            db.session.commit()
+
+            return EventMappingColumnsSchema(many=False).dump(column)
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")
