@@ -39,3 +39,20 @@ class EventMappingService:
         db.session.commit()
 
         return new_mapping.event_mapping_id  
+    
+    @staticmethod
+    def update_mapping(mapping_id: int, update_data: Dict) -> int:
+        try:
+            column = EventMapping.query.get(mapping_id)
+            if not column:
+                return None
+
+            for field, value in update_data.items():
+                setattr(column, field, value)
+            
+            db.session.commit()
+
+            return EventMappingSchema(many=False).dump(column)
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")
