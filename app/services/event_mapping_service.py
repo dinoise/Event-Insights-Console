@@ -41,7 +41,7 @@ class EventMappingService:
         return new_mapping.event_mapping_id  
     
     @staticmethod
-    def update_mapping(mapping_id: int, update_data: Dict) -> int:
+    def update_mapping(mapping_id: int, update_data: Dict) -> List[Dict[str, Any]]:
         try:
             column = EventMapping.query.get(mapping_id)
             if not column:
@@ -56,3 +56,20 @@ class EventMappingService:
         except Exception as e:
             db.session.rollback()
             raise Exception(f"Database error: {str(e)}")
+        
+    @staticmethod
+    def delete_mapping(mapping_id: int) -> List[Dict[str, Any]]:
+        try:
+            column = EventMapping.query.get(mapping_id)
+            if not column:
+                return None
+
+            setattr(column, "event_mapping_status", "INACTIVE")
+            
+            db.session.commit()
+
+            return EventMappingSchema(many=False).dump(column)
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")
+        

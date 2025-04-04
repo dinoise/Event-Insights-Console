@@ -17,3 +17,7 @@ def post_event_mappings():
 @bp.route('<int:mapping_id>', methods=['PUT'])
 def update_event_mappings(mapping_id):
     return EventMappingController.update_event_mapping(mapping_id)
+
+@bp.route('<int:mapping_id>', methods=['DELETE'])
+def delete_event_mappings(mapping_id):
+    return EventMappingController.delete_event_mapping(mapping_id)
