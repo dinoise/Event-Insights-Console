@@ -78,5 +78,8 @@ class EventMappingController:
         return jsonify({
             "status": HTTPStatus.CREATED,
             "code": "success",
-            "data": f"New mapping created: {new_mapping_id}"
+            "data": {
+                "event_mapping_id": new_mapping_id,
+                "message": "Mapping created successfully"
+            }
         }), HTTPStatus.CREATED
