@@ -25,7 +25,7 @@ class EventMappingColumnsController:
         }), HTTPStatus.OK
     
     @staticmethod
-    def post_mapping_columns() -> tuple:
+    def post_mapping_column() -> tuple:
         if not request.is_json:
             return jsonify({
                 "status": HTTPStatus.BAD_REQUEST,

@@ -9,4 +9,4 @@ def get_mapping_columns(mapping_id):
 
 @bp.route('', methods=['POST'])
 def post_mapping_columns():
-    return EventMappingColumnsController.post_mapping_columns()
+    return EventMappingColumnsController.post_mapping_column()
