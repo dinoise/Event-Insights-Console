@@ -12,7 +12,7 @@ from __init__ import db
 class EventMappingColumnsService:
 
     @staticmethod
-    def get_all_mapping_column(mapping_id) -> List[Dict[str, Any]]:
+    def get_all_mapping_columns(mapping_id) -> List[Dict[str, Any]]:
         columns = EventMappingColumns.query.filter_by(
             event_mapping_id=mapping_id,
             mapping_target_status="ACTIVE"
@@ -54,3 +54,22 @@ class EventMappingColumnsService:
             raise Exception(f"Database error: {str(e)}")
         
         return new_column.mapping_column_id
+
+    @staticmethod
+    def bulk_create_mapping_columns(columns_data: List[Dict]) -> Dict[str, int]:
+        new_objects = [
+            EventMappingColumns(
+                **data
+            ) for data in columns_data
+        ]
+
+        try:
+            db.session.bulk_save_objects(new_objects)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")    
+        
+        return {
+            "total_created": len(new_objects)
+        }

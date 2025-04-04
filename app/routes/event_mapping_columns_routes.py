@@ -10,3 +10,7 @@ def get_mapping_columns(mapping_id):
 @bp.route('', methods=['POST'])
 def post_mapping_columns():
     return EventMappingColumnsController.post_mapping_column()
+
+@bp.route('/bulk', methods=['POST'])
+def post_mapping_columns_bulk():
+    return EventMappingColumnsController.bulk_create_mapping_columns()

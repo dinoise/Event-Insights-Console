@@ -15,6 +15,7 @@ class EventMappingColumnsController:
             return jsonify({
                 "status": HTTPStatus.NOT_FOUND,
                 "code": "error",
+                "message": "Columns not found for this mapping id",
                 "data": []
             }), HTTPStatus.NOT_FOUND
         
@@ -44,7 +45,6 @@ class EventMappingColumnsController:
             'mapping_target_column'
         ]
 
-        # Verificar campos faltantes
         missing_fields = [field for field in required_fields if field not in body]
         if missing_fields:
             return jsonify({
@@ -78,4 +78,81 @@ class EventMappingColumnsController:
                 "mapping_column_id": new_column_id,
                 "message": "Column mapping created successfully"
             }
+        }), HTTPStatus.CREATED
+    
+    @staticmethod
+    def bulk_create_mapping_columns() -> tuple[dict, int]:
+        if not request.is_json:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "Request must be JSON"
+            }), HTTPStatus.BAD_REQUEST
+        
+        body = request.get_json()
+        if not body:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "JSON must not be empty"
+            }), HTTPStatus.BAD_REQUEST
+        
+        required_fields = {
+            'event_mapping_id': (int, lambda x: x > 0),
+            'mapping_sequence': (int, lambda x: x > 0),
+            'mapping_data_type': (str, lambda x: 0 < len(x) <= 150),
+            'mapping_nullable': (bool, None),
+            'mapping_origin_column': (str, lambda x: 0 < len(x) <= 150),
+            'mapping_target_column': (str, lambda x: 0 < len(x) <= 150),
+            'mapping_created_by': (str, lambda x: 0 < len(x) <= 150)
+        }
+
+        errors = []
+        validated_data = []
+        
+        for idx, column in enumerate(body, start=1):
+            try:
+                missing_fields = [field for field in required_fields if field not in column]
+                if missing_fields:
+                    raise ValueError(f"Register {idx}: Missing Values: {', '.join(missing_fields)}")
+                
+                temp_data = {}
+                for field, (field_type, validator) in required_fields.items():
+                    if not isinstance(column[field], field_type):
+                        raise ValueError(f"Register {idx}: '{field}' must be {field_type.__name__}")
+                    
+                    if validator and not validator(column[field]):
+                        raise ValueError(f"Register {idx}: invalid value for '{field}'")
+                    
+                    temp_data[field] = column[field]
+
+                # Optional fields
+                temp_data['mapping_validation_regex'] = column.get('mapping_validation_regex')
+                temp_data['mapping_target_label'] = column.get('mapping_target_label')
+
+                validated_data.append(temp_data)
+            except ValueError as ve:
+                errors.append(str(ve))
+
+        if errors:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "Errors detected, see the node 'errors' for details",
+                "errors": errors
+            }), HTTPStatus.BAD_REQUEST
+
+        try:
+            results = EventMappingColumnsService.bulk_create_mapping_columns(validated_data)
+        except Exception as e:
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": f"Internal server error: {str(e)}"
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        return jsonify({
+            "status": HTTPStatus.CREATED,
+            "code": "success",
+            "data": results
         }), HTTPStatus.CREATED
