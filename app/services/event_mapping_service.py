@@ -17,8 +17,14 @@ class EventMappingService:
         return EventMappingSchema(many=True).dump(mappings)
     
     @staticmethod
-    def create_mapping(event_type_id: int, source_id: int, event_mapping_description: str, 
-                       event_mapping_version: float, event_mapping_target_dataset: str, event_mapping_target_table: str) -> int:
+    def create_mapping(
+        event_type_id: int, 
+        source_id: int, 
+        event_mapping_description: str, 
+        event_mapping_version: float, 
+        event_mapping_target_dataset: str, 
+        event_mapping_target_table: str
+    ) -> int:
         new_mapping = EventMapping(
             event_type_id=event_type_id,
             source_id=source_id,
