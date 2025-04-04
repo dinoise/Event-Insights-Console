@@ -68,8 +68,27 @@ class EventMappingColumnsService:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise Exception(f"Database error: {str(e)}")    
+            raise Exception(f"Database error: {str(e)}")
         
         return {
             "total_created": len(new_objects)
         }
+    
+    @staticmethod
+    def update_mapping_column(mapping_column_id: int, update_data: Dict) -> Dict:
+        try:
+            column = EventMappingColumns.query.get(mapping_column_id)
+            if not column:
+                return None
+
+            for field, value in update_data.items():
+                setattr(column, field, value)
+
+            column.mapping_updated_on = db.func.current_timestamp()
+            
+            db.session.commit()
+
+            return EventMappingColumnsSchema(many=False).dump(column)
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")

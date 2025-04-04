@@ -156,3 +156,82 @@ class EventMappingColumnsController:
             "code": "success",
             "data": results
         }), HTTPStatus.CREATED
+    
+    @staticmethod
+    def update_mapping_column(mapping_column_id: int) -> tuple[dict, int]:
+        if not request.is_json:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "invalid_request",
+                "message": "Request must be JSON",
+                "data": None
+            }), HTTPStatus.BAD_REQUEST
+
+        update_data = request.get_json()
+
+        if not update_data:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "JSON must not be empty"
+            }), HTTPStatus.BAD_REQUEST
+
+        allowed_fields = {
+            'mapping_sequence': (int, lambda x: x > 0),
+            'mapping_data_type': (str, lambda x: 0 < len(x) <= 150),
+            'mapping_nullable': (bool, None),
+            'mapping_validation_regex': (str, lambda x: len(x) <= 250 if x else True),
+            'mapping_origin_column': (str, lambda x: 0 < len(x) <= 150),
+            'mapping_target_column': (str, lambda x: 0 < len(x) <= 150),
+            'mapping_target_label': (str, lambda x: len(x) <= 150 if x else True)
+        }
+
+        invalid_fields = [field for field in update_data if field not in allowed_fields]
+        if invalid_fields:        
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": f"Invalid fields for update: {', '.join(invalid_fields)}"
+            }), HTTPStatus.BAD_REQUEST
+
+        validation_errors = []
+        for field, value in update_data.items():
+            field_type, validator = allowed_fields[field]
+            if not isinstance(value, field_type):
+                validation_errors.append(f"'{field}' must be {field_type.__name__}")
+            elif validator and not validator(value):
+                validation_errors.append(f"Invalid value for '{field}'")
+
+        if validation_errors:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "Errors detected, see the node 'errors' for details",
+                "errors": validation_errors
+            }), HTTPStatus.BAD_REQUEST
+
+        try:
+            updated_column = EventMappingColumnsService.update_mapping_column(
+                mapping_column_id=mapping_column_id,
+                update_data=update_data
+            )
+        except Exception as e:
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": f"Internal server error: {str(e)}"
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+
+        if not updated_column:
+            return jsonify({
+                "status": HTTPStatus.NOT_FOUND,
+                "code": "success",
+                "message": "No mapping column for that mapping_column_id",
+                "data": updated_column
+            }), HTTPStatus.NOT_FOUND
+
+        return jsonify({
+            "status": HTTPStatus.OK,
+            "code": "success",
+            "data": updated_column
+        }), HTTPStatus.OK
