@@ -7,6 +7,8 @@ from schemas.event_mapping_columns_schema import EventMappingColumnsSchema
 # Types
 from typing import List, Dict, Any
 
+from __init__ import db
+
 class EventMappingColumnsService:
 
     @staticmethod
@@ -19,3 +21,32 @@ class EventMappingColumnsService:
         ).all()
 
         return EventMappingColumnsSchema(many=True).dump(columns)
+    
+    @staticmethod
+    def create_mapping_column(
+        event_mapping_id: int,
+        mapping_sequence: int,
+        mapping_data_type: str,
+        mapping_nullable: bool,
+        mapping_origin_column: str,
+        mapping_target_column: str,
+        mapping_validation_regex: str = None,
+        mapping_target_label: str = None
+    ) -> int:
+        new_column = EventMappingColumns(
+            event_mapping_id=event_mapping_id,
+            mapping_sequence=mapping_sequence,
+            mapping_data_type=mapping_data_type,
+            mapping_nullable=mapping_nullable,
+            mapping_validation_regex=mapping_validation_regex,
+            mapping_origin_column=mapping_origin_column,
+            mapping_target_column=mapping_target_column,
+            mapping_target_label=mapping_target_label,
+            mapping_target_status="ACTIVE",
+            mapping_created_by="system"
+        )
+        
+        db.session.add(new_column)
+        db.session.commit()
+        
+        return new_column.mapping_column_id
