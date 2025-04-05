@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template
 
 from services.event_mapping_service import EventMappingService
+from services.event_mapping_columns_service import EventMappingColumnsService
 
 bp = Blueprint('web', __name__)
 
@@ -11,10 +12,10 @@ def show_event_mappings():
 
 @bp.route('/event-mappings/<int:mapping_id>')
 def show_event_mapping_by_id(mapping_id):
-    try:
-        mapping = EventMappingService.get_all_event_mapping_by_id(mapping_id)
-    except Exception as e:
-        print(e)
-    print(mapping)     
+    mapping = EventMappingService.get_all_event_mapping_by_id(mapping_id)
 
-    return render_template('mapping.html', mapping=mapping)
+    columns = EventMappingColumnsService.get_all_mapping_columns(mapping_id)
+
+    print(columns)
+
+    return render_template('mapping.html', mapping=mapping, columns=columns)
