@@ -17,6 +17,12 @@ class EventMappingService:
         return EventMappingSchema(many=True).dump(mappings)
     
     @staticmethod
+    def get_all_event_mapping_by_id(mapping_id) -> List[Dict[str, Any]]:
+        mapping = EventMapping.query.get(mapping_id)
+
+        return EventMappingSchema(many=False).dump(mapping)
+    
+    @staticmethod
     def create_mapping(
         event_type_id: int, 
         source_id: int, 
