@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-8">
+            <div class="col-lg-10">
                 <div class="mapping-card">
                     <!-- Encabezado -->
                     <div class="mapping-header d-flex justify-content-between align-items-center">
@@ -29,7 +29,7 @@
                         <p class="mb-0">{{ mapping.event_mapping_description }}</p>
                     </div>
 
-                    <!-- Detalles principales en cards -->
+                    <!-- Detalles principales -->
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card h-100">
@@ -79,31 +79,48 @@
                         </div>
                     </div>
 
-                    <!-- Metadata adicional -->
-                    <div class="mt-4">
-                        <h5>Información Técnica</h5>
+                    <!-- Tabla de Columnas Mapeadas -->
+                    <div class="mt-5">
+                        <h4 class="mb-3">Columnas Mapeadas</h4>
+                        
+                        {% if columns %}
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
+                            <table class="table table-hover columns-table">
+                                <thead>
+                                    <tr>
+                                        <th>Secuence</th>
+                                        <th>Origin Column</th>
+                                        <th>Target Column</th>
+                                        <th>Data type</th>
+                                        <th>Nullable</th>
+                                        <th>Validation RegEx</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
+                                    {% for column in columns %}
                                     <tr>
-                                        <td width="30%" class="detail-label">ID de Mapeo</td>
-                                        <td>{{ mapping.event_mapping_id }}</td>
+                                        <td>{{ column.mapping_sequence }}</td>
+                                        <td>{{ column.mapping_origin_column }}</td>
+                                        <td>{{ column.mapping_target_column }}</td>
+                                        <td>{{ column.mapping_data_type }}</td>
+                                        <td>
+                                            {% if column.mapping_nullable %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ column.mapping_validation_regex or ''}}</td>
                                     </tr>
-                                    <tr>
-                                        <td class="detail-label">Versión</td>
-                                        <td>{{ mapping.event_mapping_version }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="detail-label">Dataset Destino</td>
-                                        <td>{{ mapping.event_mapping_target_dataset }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="detail-label">Tabla Destino</td>
-                                        <td>{{ mapping.event_mapping_target_table }}</td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            No se encontraron columnas mapeadas para este evento.
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

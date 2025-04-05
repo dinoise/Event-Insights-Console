@@ -16,6 +16,4 @@ def show_event_mapping_by_id(mapping_id):
 
     columns = EventMappingColumnsService.get_all_mapping_columns(mapping_id)
 
-    print(columns)
-
     return render_template('mapping.html', mapping=mapping, columns=columns)
