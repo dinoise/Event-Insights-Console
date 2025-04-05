@@ -8,16 +8,16 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h1>Listado de Mapeos de Eventos</h1>
+        <h1>List of mapping events</h1>
         
         {% if mappings %}
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Descripción</th>
+                    <th>Description</th>
                     <th>Version</th>
-                    <th>Acciones</th>
+                    <th>Actions/th>
                 </tr>
             </thead>
             <tbody>
@@ -34,7 +34,7 @@
             </tbody>
         </table>
         {% else %}
-        <div class="alert alert-warning">No se encontraron mapeos de eventos</div>
+        <div class="alert alert-warning">No mappings found</div>
         {% endif %}
     </div>
 
