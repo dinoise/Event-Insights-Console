@@ -12,7 +12,7 @@ from __init__ import db
 class EventMappingColumnsService:
 
     @staticmethod
-    def get_all_mapping_columns(mapping_id) -> List[Dict[str, Any]]:
+    def get_all_mapping_columns(mapping_id: int) -> List[Dict[str, Any]]:
         columns = EventMappingColumns.query.filter_by(
             event_mapping_id=mapping_id,
             mapping_target_status="ACTIVE"
