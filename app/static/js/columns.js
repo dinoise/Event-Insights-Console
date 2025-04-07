@@ -1,3 +1,5 @@
+import { getCookie, showNotification } from './utils.js'
+
 document.addEventListener('DOMContentLoaded', function() {
     const columnsBody = document.getElementById('columns-body');
     const addColumnBtn = document.getElementById('add-column-btn');
@@ -223,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json(); // Primero parseamos la respuesta
         })
         .then(response => {
-            data = response.data
+            const data = response.data
             
             // Actualizar la fila con los nuevos valores
             row.querySelector('.sequence').textContent = data.mapping_sequence;
@@ -336,26 +338,5 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             showNotification('Error creating column', 'danger');
         });
-    }
-    
-    // Función auxiliar para obtener cookies
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-    }
-    
-    // Función para mostrar notificaciones
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
-        notification.style.zIndex = '1100';
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
     }
 });
