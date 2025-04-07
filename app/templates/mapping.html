@@ -131,7 +131,6 @@
                     <div class="mt-5">
                         <h4 class="mb-3">Columnas Mapeadas</h4>
                         
-                        {% if columns %}
                         <div class="table-responsive">
                             <table class="table table-hover columns-table">
                                 <thead>
@@ -180,11 +179,6 @@
                                 </button>
                             </div>
                         </div>
-                        {% else %}
-                        <div class="alert alert-warning">
-                            No se encontraron columnas mapeadas para este evento.
-                        </div>
-                        {% endif %}
 
                         <!-- Modal de confirmación para borrado -->
                         <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
