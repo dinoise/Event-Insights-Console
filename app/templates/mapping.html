@@ -106,20 +106,36 @@
                             <div class="card h-100">
                                 <div class="card-body">
                                     <h5 class="card-title">Relaciones</h5>
-                                    <div class="detail-item">
-                                        <div class="detail-label">Tipo de Evento ID:</div>
+                                    
+                                    <!-- Dropdown para Tipo de Evento -->
+                                    <div class="detail-item editable-container" data-field="event_type">
+                                        <div class="detail-label">Tipo de Evento:</div>
                                         <div class="detail-value">
-                                            <span class="badge badge-custom">
-                                                {{ actual_event_type }}
-                                            </span>
+                                            <select class="form-select form-select-sm event-type-select" 
+                                                    data-current="{{ mapping.event_type_id }}">
+                                                {% for event_type in event_types %}
+                                                <option value="{{ event_type.event_type_id }}" 
+                                                        {% if event_type.event_type_id == mapping.event_type_id %}selected{% endif %}>
+                                                    {{ event_type.event_type_name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
                                     </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">Fuente ID:</div>
+                                    
+                                    <!-- Dropdown para Fuente -->
+                                    <div class="detail-item editable-container" data-field="source">
+                                        <div class="detail-label">Fuente:</div>
                                         <div class="detail-value">
-                                            <span class="badge badge-custom">
-                                                {{ actual_source }}
-                                            </span>
+                                            <select class="form-select form-select-sm source-select" 
+                                                    data-current="{{ mapping.source_id }}">
+                                                {% for source in sources %}
+                                                <option value="{{ source.source_id }}" 
+                                                        {% if source.source_id == mapping.source_id %}selected{% endif %}>
+                                                    {{ source.source_name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -236,8 +252,8 @@
         </div>
     </div>
     
-    <script src="{{ url_for('static', filename='js/columns.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/mapping.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/columns.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/mapping.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

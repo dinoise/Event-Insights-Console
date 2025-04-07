@@ -1,3 +1,5 @@
+import { getCookie, showNotification } from './utils.js'
+
 document.addEventListener('DOMContentLoaded', function() {
     // Configuración de la edición en línea
     const editables = document.querySelectorAll('.editable-container');
@@ -140,27 +142,64 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Función auxiliar para mostrar notificaciones (opcional)
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} fixed-top mx-auto mt-3`;
-        notification.style.width = '300px';
-        notification.style.zIndex = '1100';
-        notification.style.left = '50%';
-        notification.style.transform = 'translateX(-50%)';
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
+});
+
+// Manejar cambios en el tipo de evento
+document.querySelector('.event-type-select').addEventListener('change', function() {
+    const newEventTypeId = this.value;
+    const currentValue = this.dataset.current;
     
-    // Función auxiliar para obtener cookies
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+    if (newEventTypeId !== currentValue) {
+        updateMappingRelation('event_type_id', newEventTypeId, this);
     }
 });
+
+// Manejar cambios en la fuente
+document.querySelector('.source-select').addEventListener('change', function() {
+    const newSourceId = this.value;
+    const currentValue = this.dataset.current;
+    
+    if (newSourceId !== currentValue) {
+        updateMappingRelation('source_id', newSourceId, this);
+    }
+});
+
+// Función para actualizar la relación
+function updateMappingRelation(field, value, selectElement) {
+    const mappingId = window.location.pathname.split('/').pop();
+    const payload = {
+        [field]: parseInt( value )
+    };
+    
+    fetch(`/api/event-mapping/${mappingId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrf_token')
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(async response => {
+        const data = await response.json(); 
+
+        if (!response.ok) {
+            // Extraer el mensaje de error de la respuesta
+            const errorMsg = data.errors ||
+                            data.message || 
+                            `Error ${response.status}: ${response.statusText}`;
+            throw new Error(errorMsg);
+        }
+        return data;
+    })
+    .then(data => {
+        // Actualizar el valor actual en el dropdown
+        selectElement.dataset.current = value;
+        showNotification('Relación actualizada exitosamente', 'success');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revertir al valor anterior
+        selectElement.value = selectElement.dataset.current;
+        showNotification('Error al actualizar relación: ' + error.message, 'danger');
+    });
+}
