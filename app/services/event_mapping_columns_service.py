@@ -32,7 +32,7 @@ class EventMappingColumnsService:
         mapping_target_column: str,
         mapping_validation_regex: str = None,
         mapping_target_label: str = None
-    ) -> int:
+    ) -> Dict:
         new_column = EventMappingColumns(
             event_mapping_id=event_mapping_id,
             mapping_sequence=mapping_sequence,
@@ -53,6 +53,7 @@ class EventMappingColumnsService:
             db.session.rollback()
             raise Exception(f"Database error: {str(e)}")
         
+        return EventMappingColumnsSchema(many=False).dump(new_column)
         return new_column.mapping_column_id
 
     @staticmethod

@@ -54,7 +54,7 @@ class EventMappingColumnsController:
             }), HTTPStatus.BAD_REQUEST
 
         try:
-            new_column_id = EventMappingColumnsService.create_mapping_column(
+            new_column = EventMappingColumnsService.create_mapping_column(
                     event_mapping_id=body['event_mapping_id'],
                     mapping_sequence=body['mapping_sequence'],
                     mapping_data_type=body['mapping_data_type'],
@@ -74,10 +74,7 @@ class EventMappingColumnsController:
         return jsonify({
             "status": HTTPStatus.CREATED,
             "code": "success",
-            "data": {
-                "mapping_column_id": new_column_id,
-                "message": "Column mapping created successfully"
-            }
+            "data": new_column
         }), HTTPStatus.CREATED
     
     @staticmethod
@@ -236,6 +233,7 @@ class EventMappingColumnsController:
             "data": updated_column
         }), HTTPStatus.OK
     
+    @staticmethod
     def delete_mapping_column(mapping_column_id) -> tuple[dict, int]:
         try:
             deleted_column = EventMappingColumnsService.delete_mapping_column(
