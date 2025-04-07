@@ -11,7 +11,13 @@ class SourceService:
 
     @staticmethod
     def get_all_sources() -> List[Dict[str, Any]]:
-        sources = Source.query.all()
+        sources = Source.query.filter_by(
+            source_status="ACTIVE"
+        ).all()
+
+        if not sources:
+            return None
+
         return SourceSchema(many=True).dump(sources)
     
     @staticmethod
@@ -20,7 +26,7 @@ class SourceService:
             source_id=source_id,
             source_status="ACTIVE"
         ).first()
-        
+
         if not source:
             return None
         
