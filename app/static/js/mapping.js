@@ -12,10 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const confirmBtn = container.querySelector('.confirm-edit');
         const cancelBtn = container.querySelector('.cancel-edit');
         
+        const isBadge = content.querySelector('span');
+
         // Iniciar edición al hacer clic en el botón Editar
         editBtn.addEventListener('click', () => {
             originalValue = content.textContent.trim();
-            const isBadge = content.querySelector('span');
             const currentValue = isBadge ? isBadge.textContent.trim() : originalValue;
             
             const input = document.createElement('input');
@@ -46,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const field = container.dataset.field;
             
             // Actualizar visualmente
-            if (content.querySelector('span')) {
+            if (isBadge) {
                 content.innerHTML = `<span class="badge bg-info">${newValue}</span>`;
             } else {
                 content.textContent = newValue;
