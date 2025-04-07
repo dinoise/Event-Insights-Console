@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             mapping_nullable: inputs.nullable,
             mapping_validation_regex: inputs.validationRegex
         };
-                
+        
         updateColumn(columnId, payload, row);
     }
     
@@ -217,12 +217,14 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(payload)
         })
         .then(response => {
-            if (response.ok) {
-                return response.json();
+            if (!response.ok) {
+                throw new Error('Failed to update column');
             }
-            throw new Error('Failed to update column');
+            return response.json(); // Primero parseamos la respuesta
         })
-        .then(data => {
+        .then(response => {
+            data = response.data
+            
             // Actualizar la fila con los nuevos valores
             row.querySelector('.sequence').textContent = data.mapping_sequence;
             row.querySelector('.origin-column').textContent = data.mapping_origin_column;
@@ -256,8 +258,21 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            showNotification('Error updating column', 'danger');
+            showNotification('Error updating column: ' + error.message, 'danger');
+
+            cancelColumnEdit(row, getOriginalValues(row));
         });
+    }
+    
+    function getOriginalValues(row) {
+        return {
+            sequence: row.querySelector('.sequence').textContent,
+            originColumn: row.querySelector('.origin-column').textContent,
+            targetColumn: row.querySelector('.target-column').textContent,
+            dataType: row.querySelector('.data-type').textContent,
+            nullable: row.querySelector('.nullable .badge').textContent === 'Yes',
+            validationRegex: row.querySelector('.validation-regex').textContent
+        };
     }
     
     function createColumn(payload, row) {
