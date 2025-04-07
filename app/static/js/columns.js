@@ -290,7 +290,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             throw new Error('Failed to create column');
         })
-        .then(data => {
+        .then(response => {
+            console.log(response)
+            data = response.data
+
             // Crear nueva fila con los datos devueltos
             const newRow = document.createElement('tr');
             newRow.dataset.columnId = data.mapping_column_id;
