@@ -106,7 +106,9 @@ class EventMappingController:
         allowed_fields = {
             'event_mapping_description':(str, lambda x: 0 < len(x) <= 150),
             'event_mapping_target_dataset': (str, lambda x: 0 < len(x) <= 150),
-            'event_mapping_target_table': (str, lambda x: 0 < len(x) <= 150)
+            'event_mapping_target_table': (str, lambda x: 0 < len(x) <= 150),
+            'event_type_id': (int, lambda x: x > 0),
+            'source_id': (int, lambda x: x > 0)
         }
 
         invalid_fields = [field for field in update_data if field not in allowed_fields]
