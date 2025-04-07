@@ -23,6 +23,15 @@ class EventMappingColumnsService:
         return EventMappingColumnsSchema(many=True).dump(columns)
     
     @staticmethod
+    def get_mapping_columns_by_pk(mapping_column_id: int) -> Dict[str, Any]:
+        columns = EventMappingColumns.query.filter_by(
+            mapping_column_id=mapping_column_id,
+            mapping_target_status="ACTIVE"
+        )
+
+        return EventMappingColumnsSchema(many=False).dump(columns)
+    
+    @staticmethod
     def create_mapping_column(
         event_mapping_id: int,
         mapping_sequence: int,
