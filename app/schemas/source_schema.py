@@ -4,4 +4,4 @@ from models.source import Source
 class SourceSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Source
-        fields = ('source_id', 'source_description')  # return only this fileds
+        exclude = ('source_status', 'source_created_by')  # exlude this fileds
