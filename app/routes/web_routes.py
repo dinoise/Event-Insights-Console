@@ -7,10 +7,10 @@ from services.source_service import SourceService
 
 bp = Blueprint('web', __name__)
 
-@bp.route('/event-mappings')
+@bp.route('/mapping-list')
 def show_event_mappings():
     mappings = EventMappingService.get_all_event_mappings()        
-    return render_template('index.html', mappings=mappings)
+    return render_template('mapping_list.html', mappings=mappings)
 
 @bp.route('/event-mappings/<int:mapping_id>')
 def show_event_mapping_by_id(mapping_id):
