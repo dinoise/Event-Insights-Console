@@ -11,6 +11,11 @@ def get_event_mappings():
     return EventMappingController.get_event_mapping()
 
 @bp.route('', methods=['POST'])
+
+@bp.route('/validate_bq', methods=['POST'])
+def validate_bq_data():
+    return EventMappingController.validate_bq()
+
 def post_event_mappings():
     return EventMappingController.post_event_mapping()
 

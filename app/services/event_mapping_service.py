@@ -7,6 +7,9 @@ from schemas.event_mapping_schema import EventMappingSchema
 # Types
 from typing import List, Dict, Any
 
+# Bigquery client
+from utils.utils import BQ_CLIENT, bigquery
+
 from __init__ import db
 
 class EventMappingService:
@@ -20,7 +23,7 @@ class EventMappingService:
         return EventMappingSchema(many=True).dump(mappings)
     
     @staticmethod
-    def  get_event_mapping_by_pk(mapping_id) -> Dict[str, str]:
+    def get_event_mapping_by_pk(mapping_id) -> Dict[str, str]:
         mapping = EventMapping.query.filter_by(
             event_mapping_id=mapping_id,
             event_mapping_status='ACTIVE'
@@ -28,6 +31,30 @@ class EventMappingService:
         
         return EventMappingSchema(many=False).dump(mapping)
     
+    @staticmethod
+    def validate_existence_bq(project_id: str, dataset: str, table: str = None) -> bool:
+        if table:
+            query = f"""
+                SELECT COUNT(*) AS count
+                FROM `{project_id}.{dataset}`.INFORMATION_SCHEMA.TABLES
+                WHERE table_name = @table
+            """
+            query_params = [bigquery.ScalarQueryParameter("table", "STRING", table)]
+        else:
+            query = f"""
+                SELECT COUNT(*) AS count
+                FROM `{project_id}`.INFORMATION_SCHEMA.SCHEMATA
+                WHERE SCHEMA_NAME = @dataset
+            """
+            query_params = [bigquery.ScalarQueryParameter("dataset", "STRING", dataset)]
+
+        job_config = bigquery.QueryJobConfig(query_parameters=query_params)
+        query_job = BQ_CLIENT.query(query, job_config=job_config)
+        result = query_job.result()
+        row = list(result)[0]
+
+        return row["count"] > 0
+
     @staticmethod
     def create_mapping(
         event_type_id: int, 

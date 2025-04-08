@@ -1,5 +1,5 @@
 # Flask libraries
-from flask import jsonify, request
+from flask import jsonify, request, current_app
 
 # Services
 from services.event_mapping_service import EventMappingService
@@ -83,6 +83,55 @@ class EventMappingController:
                 "message": "Mapping created successfully"
             }
         }), HTTPStatus.CREATED
+
+    @staticmethod
+    def validate_bq() -> tuple:
+        if not request.is_json:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "invalid_request",
+                "message": "Request must be JSON",
+                "data": None
+            }), HTTPStatus.BAD_REQUEST
+
+        json_data = request.get_json()
+
+        if not json_data:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "JSON must not be empty"
+            }), HTTPStatus.BAD_REQUEST
+        
+        project_id = current_app.config.get("PROJECT_ID")
+        dataset = json_data.get("dataset")
+        if not dataset:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "Dataset is mandatory"
+            }), HTTPStatus.BAD_REQUEST
+        
+        table = json_data.get("table", None)
+
+        try:
+            is_valid = EventMappingService.validate_existence_bq(project_id, dataset, table=table)
+        except Exception as e:
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": f"Internal server error: {str(e)}"
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+
+        return jsonify({
+            "status": HTTPStatus.OK,
+            "code": "success",
+            "data": {
+                "valid": is_valid
+            }
+        }), HTTPStatus.OK
+
 
     @staticmethod
     def update_event_mapping(mapping_id) -> tuple:
