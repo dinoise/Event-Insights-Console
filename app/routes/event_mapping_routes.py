@@ -10,6 +10,10 @@ bp = Blueprint('event_mappings', __name__, url_prefix='/api/event-mapping')
 def get_event_mappings():
     return EventMappingController.get_event_mapping()
 
+@bp.route('/generate-cols', methods=['GET'])
+def generate_columns_bq():
+    return EventMappingController.generate_columns_bq()
+
 @bp.route('', methods=['POST'])
 
 @bp.route('/validate-bq', methods=['POST'])

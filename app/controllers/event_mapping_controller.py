@@ -132,6 +132,57 @@ class EventMappingController:
             }
         }), HTTPStatus.OK
 
+    @staticmethod
+    def generate_columns_bq() -> tuple:
+        if not request.is_json:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "invalid_request",
+                "message": "Request must be JSON",
+                "data": None
+            }), HTTPStatus.BAD_REQUEST
+
+        json_data = request.get_json()
+
+        if not json_data:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "JSON must not be empty"
+            }), HTTPStatus.BAD_REQUEST
+        
+        project_id = current_app.config.get("PROJECT_ID")
+        dataset = json_data.get("dataset")
+        if not dataset:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "dataset is mandatory"
+            }), HTTPStatus.BAD_REQUEST
+        
+        table = json_data.get("table", None)
+        if not table:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": "table is mandatory"
+            }), HTTPStatus.BAD_REQUEST
+
+        try:
+            columms = EventMappingService.get_table_columns(project_id, dataset, table)
+        except Exception as e:
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": f"Internal server error: {str(e)}"
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+
+        return jsonify({
+            "status": HTTPStatus.OK,
+            "code": "success",
+            "data": columms
+        }), HTTPStatus.OK
 
     @staticmethod
     def update_event_mapping(mapping_id) -> tuple:

@@ -56,6 +56,42 @@ class EventMappingService:
         return row["count"] > 0
 
     @staticmethod
+    def get_table_columns(project_id: str, dataset: str, table: str) -> List[Dict[str, str]]:
+        if not table:
+            raise ValueError("Table name can't be empty.")
+
+        query = f"""
+            SELECT
+                ordinal_position AS sequence,
+                column_name AS target_column,
+                CASE 
+                    WHEN is_nullable = 'YES' THEN 1 
+                    ELSE 0 
+                END AS nullable,
+                data_type
+            FROM
+                `{project_id}.{dataset}.INFORMATION_SCHEMA.COLUMNS`
+            WHERE 
+                table_name = @table
+            ORDER BY 
+                ordinal_position;
+        """
+
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("table", "STRING", table)
+            ]
+        )
+
+        try:
+            query_job = BQ_CLIENT.query(query, job_config=job_config)
+            results = query_job.result()
+            return [dict(row.items()) for row in results]
+        except Exception as e:
+            print(f"Error getting the columns: {e}")
+            return []
+    
+    @staticmethod
     def create_mapping(
         event_type_id: int, 
         source_id: int, 
