@@ -15,13 +15,12 @@ def generate_columns_bq():
     return EventMappingController.generate_columns_bq()
 
 @bp.route('', methods=['POST'])
+def post_event_mappings():
+    return EventMappingController.post_event_mapping()
 
 @bp.route('/validate-bq', methods=['POST'])
 def validate_bq_data():
     return EventMappingController.validate_bq()
-
-def post_event_mappings():
-    return EventMappingController.post_event_mapping()
 
 @bp.route('<int:mapping_id>', methods=['PUT'])
 def update_event_mappings(mapping_id):
