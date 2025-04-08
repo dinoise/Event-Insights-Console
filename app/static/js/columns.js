@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (generateBtn) {
-                generateBtn.style.display = 'none';
+                generateBtn.hidden = true;
             }
             
             showNotification('Column created successfully', 'success');
