@@ -5,9 +5,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const addColumnBtn = document.getElementById('add-column-btn');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
     const deleteModal = new bootstrap.Modal('#confirmDeleteModal');
+
+    const generateBtn = document.getElementById('generate-columns-btn');
+    const confirmGenerateBtn = document.getElementById('confirm-generate-btn');
+    const generateModal = new bootstrap.Modal('#generateColumnsModal');
     
     let columnToDelete = null;
     const mappingId = window.location.pathname.split('/').pop();
+    
+    if (generateBtn) initGenerateBtn()
     
     // Manejar borrado de columnas
     document.querySelectorAll('.delete-column').forEach(btn => {
@@ -186,6 +192,56 @@ document.addEventListener('DOMContentLoaded', function() {
         
         createColumn(payload, row);
     }
+
+    function initGenerateBtn() {
+        generateBtn.addEventListener('click', function() {
+            generateModal.show();
+        });
+    
+        confirmGenerateBtn.addEventListener('click', async function() {
+            generateModal.hide();
+            
+            try {
+                // 1. Obtener dataset y tabla del formulario
+                const dataset = document.querySelector('[data-field="target_dataset"] .editable-content span')?.textContent;
+                const table = document.querySelector('[data-field="target_table"] .editable-content span')?.textContent;
+                
+                if (!dataset) {
+                    throw new Error('Debes especificar un dataset válido');
+                }
+                
+                if (!table) {
+                    throw new Error('Debes especificar una tabla válida');
+                }
+    
+                // 2. Mostrar estado de carga
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generando...';
+    
+                // 3. Obtener columnas sugeridas
+                const columns = await fetchSuggestedColumns(dataset, table);
+                if (!columns || columns.length === 0) {
+                    showNotification(`No columns for found for ${dataset}.${table}`, 'danger');
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="bi bi-wrench-adjustable-circle"></i> Generate Columns';
+                    return
+                }
+                console.log(columns)
+                
+                // 4. Enviar columnas al endpoint bulk
+                await saveBulkColumns(mappingId, columns);
+                
+                // 5. Recargar la página para ver los cambios
+                window.location.reload();
+                
+            } catch (error) {
+                console.error('Error al generar columnas:', error);
+                showNotification('Error: ' + error.message, 'danger');
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="bi bi-wrench-adjustable-circle"></i> Generate Columns';
+            }
+        });
+    }
     
     // Funciones de API
     function deleteColumn(columnId) {
@@ -339,4 +395,62 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification('Error creating column', 'danger');
         });
     }
+    
+    async function fetchSuggestedColumns(dataset, table) {
+        const response = await fetch('/api/event-mapping/generate-cols', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrf_token')
+            },
+            body: JSON.stringify({
+                dataset: dataset,
+                table: table
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al obtener columnas');
+        }
+
+        const result = await response.json();
+        
+        if (result.code !== 'success') {
+            throw new Error(result.message || 'Respuesta inesperada del servidor');
+        }
+
+        return result.data;
+    }
+
+    async function saveBulkColumns(mappingId, columns) {
+        const payload = columns.map(col => ({
+            event_mapping_id: parseInt(mappingId),
+            mapping_sequence: col.sequence,
+            mapping_data_type: col.data_type,
+            mapping_nullable: col.nullable !== 0,
+            mapping_origin_column: col.target_column,
+            mapping_target_column: col.target_column,
+            mapping_target_label: col.target_column,
+            mapping_validation_regex: '',
+            mapping_created_by: "system"
+        }));
+
+        const response = await fetch('/api/mapping-columns/bulk', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrf_token')
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.errors || errorData.message || 'Error al guardar columnas');
+        }
+
+        return await response.json();
+    }
+
 });
