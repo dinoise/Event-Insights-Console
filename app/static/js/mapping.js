@@ -41,10 +41,40 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        function confirmEdit() {
+        async function confirmEdit() {
             const input = content.querySelector('input');
             const newValue = input.value.trim();
             const field = container.dataset.field;
+
+            // Validar campo vacío
+            if (!newValue) {
+                showNotification('El valor no puede estar vacío', 'danger');
+                cancelEdit();
+                return;
+            }
+            
+            // Obtener valores actuales del formulario
+            const currentDataset = document.querySelector('[data-field="target_dataset"] .editable-content span')?.textContent;
+
+            let validationPayload = {};
+            if (field === 'target_dataset') {
+                validationPayload = {
+                    dataset: newValue,
+                    table: null
+                };
+            } else if (field === 'target_table') {
+                validationPayload = {
+                    dataset: currentDataset, // Dataset es obligatorio
+                    table: newValue
+                };
+            }
+            
+            const isValid = await validateBQ(validationPayload);
+            if (!isValid) {
+                showNotification('Failed validation: The value does not exists in BigQuery', 'danger');
+                cancelEdit();
+                return;
+            }
             
             // Actualizar visualmente
             if (isBadge) {
@@ -60,9 +90,38 @@ document.addEventListener('DOMContentLoaded', function() {
             // Llamar al servicio para actualizar
             updateMapping(field, newValue);
         }
+
+        // Valiendando si el dataset o la tabla de bigquery
+        async function validateBQ({ dataset, table = null }) {
+            if (!dataset) {
+                throw new Error('Dataset es obligatorio para validación');
+            }
+            
+            const response = await fetch('/api/event-mapping/validate_bq', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrf_token')
+                },
+                body: JSON.stringify({
+                    dataset: dataset,
+                    table: table
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error en validación');
+            }
+            
+            const response_json = await response.json();
+
+            const data = response_json.data
+            return data.valid;
+        }
         
         function cancelEdit() {
-            if (content.querySelector('span')) {
+            if (isBadge) {
                 content.innerHTML = `<span class="badge bg-info">${originalValue}</span>`;
             } else {
                 content.textContent = originalValue;
@@ -123,7 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log('Actualización exitosa:', data);
             // Mostrar notificación de éxito
             showNotification('Cambios guardados exitosamente', 'success');
         })
