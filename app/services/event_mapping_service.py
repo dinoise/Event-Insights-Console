@@ -60,6 +60,13 @@ class EventMappingService:
         if not table:
             raise ValueError("Table name can't be empty.")
 
+        EXCLUDED_FIELDS = {
+            "timestamp_creacion",
+            "creado_por",
+            "uuid_evento_origen",
+            "evento_origen_mensaje"
+        }
+
         query = f"""
             SELECT
                 ordinal_position AS sequence,
@@ -86,7 +93,12 @@ class EventMappingService:
         try:
             query_job = BQ_CLIENT.query(query, job_config=job_config)
             results = query_job.result()
-            return [dict(row.items()) for row in results]
+            
+            return [
+                dict(row.items())
+                for row in results
+                if not any(value in EXCLUDED_FIELDS for value in row.values())
+            ]
         except Exception as e:
             print(f"Error getting the columns: {e}")
             return []
