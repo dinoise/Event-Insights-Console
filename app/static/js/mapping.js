@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Dataset es obligatorio para validación');
             }
             
-            const response = await fetch('/api/event-mapping/validate_bq', {
+            const response = await fetch('/api/event-mapping/validate-bq', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

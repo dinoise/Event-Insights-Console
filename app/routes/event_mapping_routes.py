@@ -12,7 +12,7 @@ def get_event_mappings():
 
 @bp.route('', methods=['POST'])
 
-@bp.route('/validate_bq', methods=['POST'])
+@bp.route('/validate-bq', methods=['POST'])
 def validate_bq_data():
     return EventMappingController.validate_bq()
 
