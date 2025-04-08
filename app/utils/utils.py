@@ -10,7 +10,7 @@ from logging import getLogger, ERROR
 
 # secretmanager: Library to retrieve secret variables within GCP.
 # storage: Library that allows access to GCP storage buckets.
-from google.cloud import secretmanager
+from google.cloud import secretmanager, bigquery
 
 from os import getenv
 
@@ -26,6 +26,20 @@ Used to standardize timestamps in processes related to logs and records.
 Example:
 --------
 fecha_hora = datetime.now().astimezone(CDMX_TZ)
+"""
+
+BQ_CLIENT = bigquery.Client()
+"""
+BQ_CLIENT is an instance of `google.cloud.bigquery.Client` used to interact with Google BigQuery.
+
+This client allows executing queries, inserting data, managing datasets, and performing other 
+operations within a Google Cloud BigQuery project.
+
+Usage Example:
+```
+    query_job = BQ_CLIENT.query("SELECT * FROM dataset.table")
+    results = query_job.result()  # Fetch query results
+```
 """
 
 # Initialize Google Cloud Logging client
