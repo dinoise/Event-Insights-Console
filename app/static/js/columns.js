@@ -226,7 +226,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     generateBtn.innerHTML = '<i class="bi bi-wrench-adjustable-circle"></i> Generate Columns';
                     return
                 }
-                console.log(columns)
                 
                 // 4. Enviar columnas al endpoint bulk
                 await saveBulkColumns(mappingId, columns);
@@ -349,8 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error('Failed to create column');
         })
         .then(response => {
-            console.log(response)
-            data = response.data
+            const data = response.data
 
             // Crear nueva fila con los datos devueltos
             const newRow = document.createElement('tr');
@@ -387,6 +385,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 columnToDelete = newRow.dataset.columnId;
                 deleteModal.show();
             });
+
+            if (generateBtn) {
+                generateBtn.style.display = 'none';
+            }
             
             showNotification('Column created successfully', 'success');
         })
