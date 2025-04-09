@@ -47,6 +47,14 @@ def show_event_types():
     event_types = EventTypeService.get_all_event_types()        
     return render_template('event_types.html', event_types=event_types)
 
+@bp.route('/event-types/<int:event_type_id>')
+def show_event_type_by_id(event_type_id):
+    event_type = EventTypeService.get_event_type_by_pk(event_type_id)    
+
+    associated_mappings = EventMappingService.get_all_event_mappings_by_event_type_id(event_type_id)
+
+    return render_template('event_type_detail.html', event_type=event_type, associated_mappings=associated_mappings)
+
 @bp.route('/sources')
 def show_sources():
     sources = SourceService.get_all_sources()   
