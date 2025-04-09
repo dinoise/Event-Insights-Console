@@ -1,4 +1,4 @@
-import { getCookie, showNotification } from './utils.js'
+import { getCookie, showNotification, validateBQ } from './utils.js'
 
 document.addEventListener('DOMContentLoaded', function() {
     // Configuración de la edición en línea
@@ -89,35 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Llamar al servicio para actualizar
             updateMapping(field, newValue);
-        }
-
-        // Valiendando si el dataset o la tabla de bigquery
-        async function validateBQ({ dataset, table = null }) {
-            if (!dataset) {
-                throw new Error('Dataset es obligatorio para validación');
-            }
-            
-            const response = await fetch('/api/event-mapping/validate-bq', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrf_token')
-                },
-                body: JSON.stringify({
-                    dataset: dataset,
-                    table: table
-                })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Error en validación');
-            }
-            
-            const response_json = await response.json();
-
-            const data = response_json.data
-            return data.valid;
         }
         
         function cancelEdit() {
