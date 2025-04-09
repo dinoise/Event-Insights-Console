@@ -7,6 +7,8 @@ from schemas.event_type_schema import EventTypeSchema
 # Types
 from typing import List, Dict, Any
 
+from __init__ import db
+
 class EventTypeService:
 
     @staticmethod
@@ -31,3 +33,23 @@ class EventTypeService:
             return None
         
         return EventTypeSchema(many=False).dump(event_type)
+    
+    @staticmethod
+    def update_event_type(event_type_id: int, update_data: Dict) -> List[Dict[str, Any]]:
+        try:
+            event_type = EventType.query.filter_by(
+                event_type_id=event_type_id,
+                event_type_status="ACTIVE"
+            ).first()
+            if not event_type:
+                return []
+
+            for field, value in update_data.items():
+                setattr(event_type, field, value)
+            
+            db.session.commit()
+
+            return EventTypeSchema(many=False).dump(event_type)
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")
