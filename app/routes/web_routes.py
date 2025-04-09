@@ -11,11 +11,6 @@ bp = Blueprint('web', __name__)
 def menu():
     return render_template('index.html')
 
-@bp.route('/event-types')
-def show_event_types():
-    event_types = EventTypeService.get_all_event_types()        
-    return render_template('event_types.html', event_types=event_types)
-
 @bp.route('/event-mappings')
 def show_event_mappings():
     mappings = EventMappingService.get_all_event_mappings()
@@ -46,3 +41,13 @@ def show_event_mapping_by_id(mapping_id):
     event_types = EventTypeService.get_all_event_types()
 
     return render_template('mapping.html', mapping=mapping, columns=columns, actual_source=actual_source, actual_event_type=actual_event_type, sources=sources, event_types=event_types)
+
+@bp.route('/event-types')
+def show_event_types():
+    event_types = EventTypeService.get_all_event_types()        
+    return render_template('event_types.html', event_types=event_types)
+
+@bp.route('/sources')
+def show_sources():
+    sources = SourceService.get_all_sources()   
+    return render_template('sources.html', sources=sources)
