@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Mapear los nombres de campo internos a los que espera la API
         const fieldMapping = {
+            'field_name': 'event_type_name',
             'field_description': 'event_type_description',
             'field_action': 'event_type_action',
             'field_story_message': 'event_type_story_message',
