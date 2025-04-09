@@ -80,11 +80,21 @@
                 </div>
                 <div class="modal-body">
                     <form id="mapping-form">
-                        <div class="mb-3">
-                            <label for="mapping-description" class="form-label">Description</label>
-                            <input type="text" class="form-control" id="mapping-description" required>
-                        </div>
                         <div class="row">
+                            <div class="col-md-9">
+                                <label for="mapping-description" class="form-label">Description</label>
+                                <input type="text" class="form-control" id="mapping-description" required>
+                            </div>
+    
+                            <div class="col-md-3">
+                                <label for="mapping-version" class="form-label">Version</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="mapping-version" value="1.0" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="version-suggest-btn" title="Suggest next version">
+                                        <i class="bi bi-lightbulb"></i>
+                                    </button>
+                                </div>
+                            </div>
 
                             <div class="col-md-6 mb-3">
                                 <label for="target-dataset" class="form-label">Target Dataset</label>

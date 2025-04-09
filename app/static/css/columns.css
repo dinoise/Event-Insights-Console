@@ -13,6 +13,11 @@
     font-size: 0.75rem;
 }
 
+/* Estilos para el grupo de versión */
+#version-suggest-btn {
+    padding: 0.375rem 0.75rem;
+}
+
 /* Inputs en modo edición */
 .columns-table .form-control-sm, 
 .columns-table .form-select-sm {

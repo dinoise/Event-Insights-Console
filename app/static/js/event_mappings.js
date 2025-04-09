@@ -13,9 +13,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const datasetIndicator = document.getElementById('dataset-indicator');
     const tableIndicator = document.getElementById('table-indicator');
+
+    const versionInput = document.getElementById('mapping-version');
+    const versionSuggestBtn = document.getElementById('version-suggest-btn');
     
     let datasetIsValid = false;
     let tableIsValid = false;
+    let versionIsValid = false
 
     let currentDataset = ''; // Para mantener el estado del dataset válido
 
@@ -25,11 +29,35 @@ document.addEventListener('DOMContentLoaded', function() {
     createBtn.addEventListener('click', function() {
         createModal.show();
     });
+
+    // Botón para sugerir versión
+    versionSuggestBtn.addEventListener('click', function() {
+        const currentVersion = versionInput.value;
+        versionInput.value = suggestNextVersion(currentVersion);
+    });
+
+    // Validación del formato de versión al salir del campo
+    versionInput.addEventListener('focusout', function() {
+        const versionRegex = /^\d+\.\d+$/;
+        if (!versionRegex.test(versionInput.value)) {
+            versionIsValid = false
+            showNotification('Version format should be MAJOR.MINOR (e.g. 1.0)', 'warning');
+            versionInput.value = '1.0';
+        }
+        versionIsValid = true
+    });
     
     // Manejar la creación del mapeo
     confirmCreateBtn.addEventListener('click', async function() {
+        if (!versionIsValid) {
+            versionInput.classList.add('is-invalid');
+            versionInput.focus()
+            showNotification('Please validate the version', 'warning');
+            return;
+        }
+
         // Validar dataset primero
-        if (!datasetIsValid || !datasetIsValid) {
+        if (!datasetIsValid) {
             showNotification('Please validate the dataset first', 'warning');
             return;
         }
@@ -51,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
             event_mapping_target_table: document.getElementById('target-table').value,
             event_type_id: document.getElementById('event-type').value,
             source_id: document.getElementById('source').value,
-            event_mapping_version: "1.0"
+            event_mapping_version: document.getElementById('mapping-version').value,
         };
         
         try {
@@ -192,6 +220,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('Error deleting mapping: ' + error.message, 'danger');
             });
     });
+
+    function suggestNextVersion(currentVersion) {
+        if (!currentVersion) return '1.0';
+        
+        try {
+            const versionParts = currentVersion.split('.');
+            if (versionParts.length === 2) {
+                const major = parseInt(versionParts[0]);
+                const minor = parseInt(versionParts[1]);
+                if (!isNaN(major) && !isNaN(minor)) {
+                    return `${major}.${minor + 1}`;
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing version:', e);
+        }
+        
+        return '1.0';
+    }
 
     // Función para actualizar el indicador
     function updateIndicator(element, state) {
