@@ -53,9 +53,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            if (!isBadge) {
+                content.textContent = newValue;
+
+                content.classList.remove('editing');
+                controls.classList.remove('show');
+                editBtn.classList.remove('d-none');
+                
+                // Llamar al servicio para actualizar
+                updateMapping(field, newValue);
+
+                return
+            }
+
             // Obtener valores actuales del formulario
             const currentDataset = document.querySelector('[data-field="target_dataset"] .editable-content span')?.textContent;
-
+            
             let validationPayload = {};
             if (field === 'target_dataset') {
                 validationPayload = {
@@ -76,12 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Actualizar visualmente
-            if (isBadge) {
-                content.innerHTML = `<span class="badge bg-info">${newValue}</span>`;
-            } else {
-                content.textContent = newValue;
-            }
+            content.innerHTML = `<span class="badge bg-info">${newValue}</span>`;
             
             content.classList.remove('editing');
             controls.classList.remove('show');
