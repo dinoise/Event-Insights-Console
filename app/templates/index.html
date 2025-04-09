@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeliverNow Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --accent-color: #f6c23e;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #224abe 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card {
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .card-event-mappings {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .card-event-types {
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .card-sources {
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+        
+        .card-text {
+            color: #6e707e;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-card {
+            border-radius: 20px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-event-mappings {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-event-types {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-sources {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            color: #b7b9cc;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">DeliverNow Management</h1>
+            <p class="lead">Sistema de administración de mapeos de eventos</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        <div class="row g-4">
+            <!-- Event Mappings Card -->
+            <div class="col-md-4">
+                <div class="feature-card card card-event-mappings">
+                    <div class="card-body text-center">
+                        <div class="card-icon">
+                            <i class="bi bi-diagram-3"></i>
+                        </div>
+                        <h3 class="card-title">Event Mappings</h3>
+                        <p class="card-text">
+                            Administra todos los mapeos de eventos entre sistemas. Crea, edita y visualiza las relaciones de datos.
+                        </p>
+                        <a href="/event-mappings" class="btn btn-card btn-event-mappings">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Event Types Card -->
+            <div class="col-md-4">
+                <div class="feature-card card card-event-types">
+                    <div class="card-body text-center">
+                        <div class="card-icon">
+                            <i class="bi bi-tags"></i>
+                        </div>
+                        <h3 class="card-title">Event Types</h3>
+                        <p class="card-text">
+                            Gestiona los diferentes tipos de eventos que pueden ser mapeados en el sistema.
+                        </p>
+                        <a href="/event-types" class="btn btn-card btn-event-types">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sources Card -->
+            <div class="col-md-4">
+                <div class="feature-card card card-sources">
+                    <div class="card-body text-center">
+                        <div class="card-icon">
+                            <i class="bi bi-database"></i>
+                        </div>
+                        <h3 class="card-title">Sources</h3>
+                        <p class="card-text">
+                            Administra las fuentes de datos disponibles para los mapeos de eventos.
+                        </p>
+                        <a href="/sources" class="btn btn-card btn-sources">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer text-center">
+        <div class="container">
+            <p>DeliverNow Management System &copy; 2025</p>
+            <p class="text-muted small">v1.0.0</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
