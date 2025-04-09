@@ -32,6 +32,15 @@ class EventMappingService:
         return EventMappingSchema(many=False).dump(mapping)
     
     @staticmethod
+    def get_all_event_mappings_by_event_type_id(event_type_id) -> List[Dict[str, str]]:
+        mapping = EventMapping.query.filter_by(
+            event_type_id=event_type_id,
+            event_mapping_status='ACTIVE'
+        ).all()
+        
+        return EventMappingSchema(many=True).dump(mapping)
+    
+    @staticmethod
     def validate_existence_bq(project_id: str, dataset: str, table: str = None) -> bool:
         if table:
             query = f"""
