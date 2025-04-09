@@ -19,27 +19,34 @@
 
         <div class="detail-card">
             <!-- Encabezado -->
-            <div class="detail-header d-flex justify-content-between align-items-center">
+            <div class="detail-header">
                 <h2>
                     {{ event_type.event_type_name }}
                     <span class="badge badge-domain ms-2">{{ event_type.event_domain }}</span>
                     <span class="badge badge-stage ms-1">{{ event_type.event_stage }}</span>
                     <span class="badge badge-version ms-1">v{{ event_type.event_type_version }}</span>
                 </h2>
-                <div>
-                    <button class="btn btn-outline-primary me-2" id="edit-type-btn">
-                        <i class="bi bi-pencil"></i> Edit
-                    </button>
-                    <button class="btn btn-outline-danger" id="delete-type-btn">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
-                </div>
             </div>
 
             <!-- Descripción -->
-            <div class="alert alert-light mb-4">
-                <h4 class="alert-heading">Description</h4>
-                <p class="mb-0">{{ event_type.event_type_description }}</p>
+            <div class="alert alert-light mb-4 editable-container" data-field="description">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h4 class="alert-heading">Description</h4>
+                        <p class="mb-0 editable-content">{{ event_type.event_type_description }}</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary begin-edit">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </div>
+                <div class="editable-controls mt-2 d-none">
+                    <button class="btn btn-sm btn-success confirm-edit me-1">
+                        <i class="bi bi-check"></i> Confirm
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger cancel-edit">
+                        <i class="bi bi-x"></i> Cancel
+                    </button>
+                </div>
             </div>
 
             <!-- Detalles principales -->
@@ -47,19 +54,38 @@
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-body">
+
                             <h5 class="card-title">Basic Information</h5>
+                                
                             <div class="detail-item">
                                 <div class="detail-label">Type ID:</div>
                                 <div class="detail-value">{{ event_type.event_type_id }}</div>
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Action:</div>
-                                <div class="detail-value">{{ event_type.event_type_action }}</div>
+
+                            <div class="detail-item editable-container" data-field="field_action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="detail-label">Action:</div>
+                                        <div class="detail-value editable-content">{{ event_type.event_type_action }}</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary begin-edit">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Story Message:</div>
-                                <div class="detail-value">{{ event_type.event_type_story_message }}</div>
+
+                            <div class="detail-item editable-container" data-field="field_story_message">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="detail-label">Story Message:</div>
+                                        <div class="detail-value">{{ event_type.event_type_story_message }}</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary begin-edit">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                </div>
                             </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -79,22 +105,23 @@
                                     <span class="badge badge-stage">{{ event_type.event_stage }}</span>
                                 </div>
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Version:</div>
-                                <div class="detail-value">
-                                    <span class="badge badge-version">v{{ event_type.event_type_version }}</span>
-                                </div>
-                            </div>
-                            <div class="detail-item">
+                            <div class="detail-item editable-container" data-field="field_story_message">
                                 <div class="detail-label">Documentation:</div>
                                 <div class="detail-value documentation-link">
-                                    {% if event_type.event_documentation_link %}
-                                    <a href="{{ event_type.event_documentation_link }}" target="_blank">
-                                        {{ event_type.event_documentation_link }}
-                                    </a>
-                                    {% else %}
-                                    <span class="text-muted">No documentation link provided</span>
-                                    {% endif %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            {% if event_type.event_documentation_link %}
+                                            <a href="{{ event_type.event_documentation_link }}" target="_blank">
+                                                {{ event_type.event_documentation_link }}
+                                            </a>
+                                            {% else %}
+                                            <span class="text-muted">No documentation link provided</span>
+                                            {% endif %}
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary begin-edit">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

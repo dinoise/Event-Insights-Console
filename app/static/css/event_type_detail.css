@@ -34,3 +34,35 @@
 .documentation-link {
     word-break: break-all;
 }
+
+/* Contenedor editable */
+.editable-container {
+    position: relative;
+    transition: all 0.3s ease;
+    padding-bottom: 10px;
+}
+
+/* Controles de edición - inicialmente ocultos */
+.editable-controls {
+    display: none !important; /* Fuerza la ocultación */
+    margin-top: 8px;
+    gap: 5px;
+}
+
+.editable-controls.show {
+    display: flex !important; /* Solo visible con esta clase */
+}
+
+/* Estado de edición */
+.editable-content.editing {
+    margin-bottom: 10px;
+}
+
+/* Input durante la edición */
+.editable-input {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    font-size: inherit;
+}
