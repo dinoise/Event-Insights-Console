@@ -12,19 +12,19 @@
 <body>
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1>List of event types </h1>
+            <h1>List of sources </h1>
             <a href="/" class="btn btn-outline-secondary">
                 ← Volver al menu principal
             </a>
         </div>
 
         <button type="button" class="btn btn-primary create-btn mb-3" id="create-source-btn">
-            <i class="bi bi-plus-circle me-2"></i>Create Event Type
+            <i class="bi bi-plus-circle me-2"></i>Create source
         </button>
 
         {% if sources %}
         <table class="table table-striped">
-            <thead>
+            <thead>`
                 <tr>
                     <th>ID</th>
                     <th>Source name</th>
@@ -51,7 +51,7 @@
             </tbody>
         </table>        
         {% else %}
-        <div class="alert alert-warning">No event types found</div>
+        <div class="alert alert-warning">No sources found</div>
         {% endif %}
     </div>
 
