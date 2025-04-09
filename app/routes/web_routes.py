@@ -10,7 +10,7 @@ bp = Blueprint('web', __name__)
 @bp.route('/event-mappings')
 def show_event_mappings():
     mappings = EventMappingService.get_all_event_mappings()        
-    return render_template('mapping_list.html', mappings=mappings)
+    return render_template('event_mappings.html', mappings=mappings)
 
 @bp.route('/event-mappings/<int:mapping_id>')
 def show_event_mapping_by_id(mapping_id):
