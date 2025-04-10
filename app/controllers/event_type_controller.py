@@ -101,3 +101,28 @@ class EventTypeController:
             "code": "success",
             "data": updated_type
         }), HTTPStatus.OK
+    
+    @staticmethod
+    def delete_event_type(event_type_id) -> tuple:
+        try:
+            deleted_mapping = EventTypeService.delete_event_type(
+                event_type_id=event_type_id
+            )
+        except Exception as e:
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": f"Internal server error: {str(e)}"
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        if not deleted_mapping:
+            return jsonify({
+                "status": HTTPStatus.NOT_FOUND,
+                "code": "success",
+                "message": "Mapping not found"
+            }), HTTPStatus.NOT_FOUND
+
+        return jsonify({
+            "status": HTTPStatus.OK,
+            "code": "success"
+        }), HTTPStatus.OK

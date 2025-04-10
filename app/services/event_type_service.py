@@ -35,17 +35,36 @@ class EventTypeService:
         return EventTypeSchema(many=False).dump(event_type)
     
     @staticmethod
-    def update_event_type(event_type_id: int, update_data: Dict) -> List[Dict[str, Any]]:
+    def update_event_type(event_type_id: int, update_data: Dict) -> Dict[str, Any]:
         try:
             event_type = EventType.query.filter_by(
                 event_type_id=event_type_id,
                 event_type_status="ACTIVE"
             ).first()
             if not event_type:
-                return []
+                return {}
 
             for field, value in update_data.items():
                 setattr(event_type, field, value)
+            
+            db.session.commit()
+
+            return EventTypeSchema(many=False).dump(event_type)
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")
+        
+    @staticmethod
+    def delete_event_type(event_type_id: int) -> Dict[str, Any]:
+        try:
+            event_type = EventType.query.filter_by(
+                event_type_id=event_type_id,
+                event_type_status="ACTIVE"
+            ).first()
+            if not event_type:
+                return {}
+
+            setattr(event_type, "event_type_status", "INACTIVE")
             
             db.session.commit()
 

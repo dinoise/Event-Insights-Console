@@ -10,3 +10,7 @@ def get_event_types():
 @bp.route('<int:event_type>', methods=['PUT'])
 def update_event_type(event_type):
     return EventTypeController.update_event_type(event_type)
+
+@bp.route('<int:event_type>', methods=['DELETE'])
+def delete_event_type(event_type):
+    return EventTypeController.delete_event_type(event_type)
