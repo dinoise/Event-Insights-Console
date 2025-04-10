@@ -11,3 +11,7 @@ def get_sources():
 @bp.route('/<int:source_id>', methods=['PUT'])
 def update_source(source_id):
     return SourceController.update_source(source_id)
+
+@bp.route('<int:source_id>', methods=['DELETE'])
+def delete_source(source_id):
+    return SourceController.delete_source(source_id)

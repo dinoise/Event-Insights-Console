@@ -53,3 +53,23 @@ class SourceService:
         except Exception as e:
             db.session.rollback()
             raise Exception(f"Database error: {str(e)}")
+        
+
+    @staticmethod
+    def delete_source(source_id: int) -> Dict[str, Any]:
+        try:
+            source = Source.query.filter_by(
+                source_id=source_id,
+                source_status="ACTIVE"
+            ).first()
+            if not source:
+                return {}
+
+            setattr(source, "source_status", "INACTIVE")
+            
+            db.session.commit()
+
+            return SourceSchema(many=False).dump(source)
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Database error: {str(e)}")

@@ -98,3 +98,27 @@ class SourceController:
             "data": updated_type
         }), HTTPStatus.OK
     
+    @staticmethod
+    def delete_source(source_id) -> tuple:
+        try:
+            deleted_mapping = SourceService.delete_source(
+                source_id=source_id
+            )
+        except Exception as e:
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": f"Internal server error: {str(e)}"
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        if not deleted_mapping:
+            return jsonify({
+                "status": HTTPStatus.NOT_FOUND,
+                "code": "success",
+                "message": "Source not found"
+            }), HTTPStatus.NOT_FOUND
+
+        return jsonify({
+            "status": HTTPStatus.OK,
+            "code": "success"
+        }), HTTPStatus.OK
