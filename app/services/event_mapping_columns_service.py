@@ -63,7 +63,6 @@ class EventMappingColumnsService:
             raise Exception(f"Database error: {str(e)}")
         
         return EventMappingColumnsSchema(many=False).dump(new_column)
-        return new_column.mapping_column_id
 
     @staticmethod
     def bulk_create_mapping_columns(columns_data: List[Dict]) -> Dict[str, int]:
