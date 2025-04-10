@@ -127,19 +127,33 @@
                                 <label for="event-type" class="form-label">Event Type</label>
                                 <select class="form-select" id="event-type" required>
                                     <option value="">Select an event type</option>
-                                    {% for event_type in event_types %}
-                                    <option value="{{ event_type.event_type_id }}">{{ event_type.event_type_name }}</option>
-                                    {% endfor %}
+                                    {% if event_types %}
+                                        {% for event_type in event_types %}
+                                        <option value="{{ event_type.event_type_id }}">{{ event_type.event_type_name }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>No event types available</option>
+                                    {% endif %}
                                 </select>
+                                {% if not event_types %}
+                                <div class="text-muted small mt-1">There are no event types registered in the system.</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="source" class="form-label">Source</label>
                                 <select class="form-select" id="source" required>
                                     <option value="">Select a source</option>
-                                    {% for source in sources %}
-                                    <option value="{{ source.source_id }}">{{ source.source_name }}</option>
-                                    {% endfor %}
+                                    {% if sources %}
+                                        {% for source in sources %}
+                                        <option value="{{ source.source_id }}">{{ source.source_name }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>No sources available</option>
+                                    {% endif %}
                                 </select>
+                                {% if not sources %}
+                                <div class="text-muted small mt-1">There are no sources registered in the system.</div>
+                                {% endif %}
                             </div>
                         </div>
                     </form>
