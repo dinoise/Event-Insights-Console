@@ -23,7 +23,55 @@ class EventTypeController:
             "code": "success",
             "data": event_types
         }), 200
+    
+    @staticmethod
+    def post_event_mapping() -> tuple:
+        body = request.get_json()
 
+        required_params = [
+            "event_type_name",
+            "event_type_description",
+            "event_type_action",
+            "event_domain",
+            "event_stage",
+            "event_type_version"
+        ]
+
+        missing_params = [param for param in required_params if param not in body or body[param] is None]
+        if missing_params:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": f"Missing required parameters: {', '.join(missing_params)}"
+            }), HTTPStatus.BAD_REQUEST
+
+        try:
+            new_mapping_id = EventTypeService.create_event_type(event_type_name=body['event_type_name'],
+                                                                event_type_description=body['event_type_description'],
+                                                                event_type_action=body['event_type_action'],
+                                                                event_domain=body['event_domain'],
+                                                                event_stage=body['event_stage'],
+                                                                event_type_version=body['event_type_version'],
+                                                                event_type_story_message=body.get('event_type_story_message'),
+                                                                event_type_pubsub_topic_name=body.get('event_type_pubsub_topic_name'),
+                                                                event_documentation_link=body.get('event_documentation_link'))
+        except Exception as e:
+            error_msg = f"Error creating a new mapping: {str(e)}"
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": error_msg
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        return jsonify({
+            "status": HTTPStatus.CREATED,
+            "code": "success",
+            "data": {
+                "event_mapping_id": new_mapping_id,
+                "message": "Mapping created successfully"
+            }
+        }), HTTPStatus.CREATED
+    
     @staticmethod
     def update_event_type(event_type_id: int) -> tuple:
         if not request.is_json:
