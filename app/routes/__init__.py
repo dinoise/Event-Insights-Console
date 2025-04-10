@@ -10,3 +10,4 @@ def init_app_routes(app):
     app.register_blueprint(event_types_bp)
     app.register_blueprint(event_mapping_bp)
     app.register_blueprint(mappings_columns_bp)
+    
