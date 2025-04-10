@@ -19,6 +19,9 @@ class EventMappingService:
         mappings = EventMapping.query.filter_by(
             event_mapping_status='ACTIVE'
         ).all()
+
+        if not mappings: 
+            return None
         
         return EventMappingSchema(many=True).dump(mappings)
     
