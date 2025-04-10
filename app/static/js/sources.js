@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const createBtn = document.getElementById('create-source-btn');
     const createModal = new bootstrap.Modal('#createEventSourceModal');
     const confirmCreateBtn = document.getElementById('confirm-create-event-source');
-    const eventSourceForm = document.getElementById('event-source-form');
+    const eventSourceForm = document.getElementById('source-form');
 
     const deleteModal = new bootstrap.Modal('#deleteSourceModal');
     const deleteBtn = document.querySelectorAll('.delete-source');
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const payload = {
             source_name: document.getElementById('source-name').value,
-            source_description: document.getElementById('source-description').value,
+            source_description: document.getElementById('source-description').value
         };
         
         try {
@@ -38,9 +38,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => {
                     showNotification('Event source created successfully!', 'success');
                     createModal.hide();
+
+                    const data = response.data.new_source
                     
                     // Redirigir al nuevo event source o recargar la página
-                    window.location.href = `/sources/${response.source_id}`;
+                    window.location.href = `/sources/${data.source_id}`;
                 })
                 .catch(error => {
                     console.error('Error:', error);
