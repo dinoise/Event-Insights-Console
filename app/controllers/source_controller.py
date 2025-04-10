@@ -25,6 +25,43 @@ class SourceController:
         }), HTTPStatus.OK
 
     @staticmethod
+    def post_source() -> tuple:
+        body = request.get_json()
+
+        required_params = [
+            "source_name",
+            "source_description",
+        ]
+
+        missing_params = [param for param in required_params if param not in body or body[param] is None]
+        if missing_params:
+            return jsonify({
+                "status": HTTPStatus.BAD_REQUEST,
+                "code": "error",
+                "message": f"Missing required parameters: {', '.join(missing_params)}"
+            }), HTTPStatus.BAD_REQUEST
+
+        try:
+            new_source = SourceService.create_source(source_name=body['source_name'], 
+                                                         source_description=body['source_description'])
+        except Exception as e:
+            error_msg = f"Error creating a new mapping: {str(e)}"
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": error_msg
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        return jsonify({
+            "status": HTTPStatus.CREATED,
+            "code": "success",
+            "data": {
+                "new_source": new_source,
+                "message": "Mapping created successfully"
+            }
+        }), HTTPStatus.CREATED
+    
+    @staticmethod
     def update_source(source_id: int) -> tuple:
         if not request.is_json:
             return jsonify({

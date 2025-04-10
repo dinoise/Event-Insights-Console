@@ -7,6 +7,9 @@ bp = Blueprint('sources', __name__, url_prefix='/api/sources')
 def get_sources():
     return SourceController.get_sources()
 
+@bp.route('', methods=['POST'])
+def post_sources():
+    return SourceController.post_source()
 
 @bp.route('/<int:source_id>', methods=['PUT'])
 def update_source(source_id):
