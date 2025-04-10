@@ -59,3 +59,12 @@ def show_event_type_by_id(event_type_id):
 def show_sources():
     sources = SourceService.get_all_sources()   
     return render_template('sources.html', sources=sources)
+
+
+@bp.route('/sources/<int:source_id>')
+def show_source_type_by_id(source_id):
+    source = SourceService.get_source_by_pk(source_id)
+
+    associated_mappings = EventMappingService.get_all_event_mappings_by_source_id(source_id)
+
+    return render_template('source_detail.html', source=source, associated_mappings=associated_mappings)
