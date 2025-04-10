@@ -13,6 +13,7 @@ class EventType(db.Model):
     event_type_story_message = db.Column(db.String(250))
     event_type_status = db.Column(db.String(30))
     event_payload_file_target = db.Column(db.String(250))
+    event_type_pubsub_topic_name = db.Column(db.String(300))
     event_type_version = db.Column(db.Float)
     event_documentation_link = db.Column(db.String(350))
     event_type_created_on = db.Column(db.TIMESTAMP)
