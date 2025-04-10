@@ -23,7 +23,7 @@ class EventMappingService:
         return EventMappingSchema(many=True).dump(mappings)
     
     @staticmethod
-    def get_event_mapping_by_pk(mapping_id) -> Dict[str, str]:
+    def get_event_mapping_by_pk(mapping_id: int) -> Dict[str, str]:
         mapping = EventMapping.query.filter_by(
             event_mapping_id=mapping_id,
             event_mapping_status='ACTIVE'
@@ -32,9 +32,18 @@ class EventMappingService:
         return EventMappingSchema(many=False).dump(mapping)
     
     @staticmethod
-    def get_all_event_mappings_by_event_type_id(event_type_id) -> List[Dict[str, str]]:
+    def get_all_event_mappings_by_event_type_id(event_type_id: int) -> List[Dict[str, str]]:
         mapping = EventMapping.query.filter_by(
             event_type_id=event_type_id,
+            event_mapping_status='ACTIVE'
+        ).all()
+        
+        return EventMappingSchema(many=True).dump(mapping)
+    
+    @staticmethod
+    def get_all_event_mappings_by_source_id(source_id: int) -> List[Dict[str, str]]:
+        mapping = EventMapping.query.filter_by(
+            source_id=source_id,
             event_mapping_status='ACTIVE'
         ).all()
         
