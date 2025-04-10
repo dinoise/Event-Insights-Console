@@ -1,0 +1,68 @@
+name: CI/CD for Google Cloud Run
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+
+jobs:
+  build-and-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.EST_52_PROJECT_ID }}
+
+      - name: Configure Docker to use the Google Cloud CLI
+        run: gcloud auth configure-docker ${{ secrets.REGION }}-docker.pkg.dev
+
+      - name: Build the Docker image (Production)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          docker build -t ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-prod .
+
+      - name: Build the Docker image (Development)
+        if: ${{ github.ref == 'refs/heads/dev' }}
+        run: |
+          docker build -t ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-dev .
+
+      - name: Push Docker image to Google Artifact Registry (Production)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          docker push ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-prod
+
+      - name: Push Docker image to Google Artifact Registry (Development)
+        if: ${{ github.ref == 'refs/heads/dev' }}
+        run: |
+          docker push ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-dev
+
+      - name: Deploy to Cloud Run (Production)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          gcloud run deploy ${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-prod \
+            --image ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-prod:latest \
+            --platform managed \
+            --region ${{ secrets.REGION }} \
+            --set-env-vars FLASK_ENV=prod,CLOUD_VAR=true,GOOGLE_CLOUD_PROJECT=${{ secrets.EST_52_PROJECT_ID }} \
+            --no-allow-unauthenticated
+
+      - name: Deploy to Cloud Run (Development)
+        if: ${{ github.ref == 'refs/heads/dev' }}
+        run: |
+          gcloud run deploy ${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-dev \
+            --image ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-dev:latest \
+            --platform managed \
+            --region ${{ secrets.REGION }} \
+            --set-env-vars FLASK_ENV=dev,CLOUD_VAR=true,GOOGLE_CLOUD_PROJECT=${{ secrets.EST_52_PROJECT_ID }} \
+            --no-allow-unauthenticated
