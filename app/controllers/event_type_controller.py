@@ -46,7 +46,7 @@ class EventTypeController:
             }), HTTPStatus.BAD_REQUEST
 
         try:
-            new_mapping_id = EventTypeService.create_event_type(event_type_name=body['event_type_name'],
+            new_event_type = EventTypeService.create_event_type(event_type_name=body['event_type_name'],
                                                                 event_type_description=body['event_type_description'],
                                                                 event_type_action=body['event_type_action'],
                                                                 event_domain=body['event_domain'],
@@ -67,7 +67,7 @@ class EventTypeController:
             "status": HTTPStatus.CREATED,
             "code": "success",
             "data": {
-                "event_mapping_id": new_mapping_id,
+                "new_event_type": new_event_type,
                 "message": "Mapping created successfully"
             }
         }), HTTPStatus.CREATED
