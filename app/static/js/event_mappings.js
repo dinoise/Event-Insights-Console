@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let datasetIsValid = false;
     let tableIsValid = false;
-    let versionIsValid = false
+    let versionIsValid = true
 
     let currentDataset = ''; // Para mantener el estado del dataset válido
 
