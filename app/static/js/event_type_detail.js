@@ -3,7 +3,6 @@ import { getCookie, showNotification } from './utils.js'
 document.addEventListener('DOMContentLoaded', function() {
     // Configuración de la edición en línea
     const editables = document.querySelectorAll('.editable-container');
-    let originalValue = '';
     
     editables.forEach(container => {
         const content = container.querySelector('.editable-content');
@@ -12,15 +11,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const confirmBtn = container.querySelector('.confirm-edit');
         const cancelBtn = container.querySelector('.cancel-edit');
 
+        let originalValue = content.textContent.trim();
+        
+        const isTextMuted = container.querySelector('.text-muted') !== null;
+
         // Iniciar edición al hacer clic en el botón Editar
         editBtn.addEventListener('click', () => {
-            originalValue = content.textContent.trim();
             const currentValue = originalValue;
             
             const input = document.createElement('input');
             input.type = 'text';
             input.className = 'editable-input form-control form-control-sm';
-            input.value = currentValue;
+            input.value = isTextMuted ? '' : currentValue;
             
             content.innerHTML = '';
             content.appendChild(input);
@@ -50,14 +52,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const field = container.dataset.field;
 
             // Validar campo vacío
-            if (!newValue) {            
+            if (!newValue) {         
                 showNotification('El valor no puede estar vacío', 'danger');
                 cancelEdit();
                 return;
             }
 
             content.textContent = newValue;
-                                    
+            
+            if (isTextMuted) {
+                content.classList.remove('text-muted');
+                content.classList.remove('font-italic');
+            }
             content.classList.remove('editing');
             controls.classList.remove('show');
             editBtn.classList.remove('d-none');

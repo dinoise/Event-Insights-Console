@@ -108,9 +108,16 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <div class="detail-label">Story Message:</div>
-                                                <div class="detail-value editable-content">
-                                                    {{ event_type.event_type_story_message }}
-                                                </div>
+                                                {% if event_type.event_type_story_message %}
+                                                    <div class="detail-value editable-content">
+                                                        {{ event_type.event_type_story_message }}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="detail-value editable-content text-muted font-italic">
+                                                        No Story Message configured
+                                                    </div>
+                                                {% endif %}
+
                                             </div>
                                             <button class="btn btn-sm btn-outline-secondary begin-edit">
                                                 <i class="bi bi-pencil"></i> Editar
@@ -130,9 +137,15 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <div class="detail-label">Pub/Sub Topic:</div>
-                                                <div class="detail-value editable-content">
-                                                    {{ event_type.event_type_pubsub_topic_name }}
-                                                </div>
+                                                {% if event_type.event_type_pubsub_topic_name %}
+                                                    <div class="detail-value editable-content">
+                                                        {{ event_type.event_type_pubsub_topic_name }}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="detail-value editable-content text-muted font-italic">
+                                                        No Pub/Sub topic configured
+                                                    </div>
+                                                {% endif %}
                                             </div>
                                             <button class="btn btn-sm btn-outline-secondary begin-edit">
                                                 <i class="bi bi-pencil"></i> Editar
