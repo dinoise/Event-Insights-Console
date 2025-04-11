@@ -86,8 +86,9 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <div class="detail-label">Action:</div>
-                                                <div class="detail-value editable-content">{{
-                                                    event_type.event_type_action }}</div>
+                                                <div class="detail-value editable-content">
+                                                    {{ event_type.event_type_action }}
+                                                </div>
                                             </div>
                                             <button class="btn btn-sm btn-outline-secondary begin-edit">
                                                 <i class="bi bi-pencil"></i> Editar
@@ -107,8 +108,31 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <div class="detail-label">Story Message:</div>
-                                                <div class="detail-value editable-content">{{
-                                                    event_type.event_type_story_message }}</div>
+                                                <div class="detail-value editable-content">
+                                                    {{ event_type.event_type_story_message }}
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-secondary begin-edit">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                        </div>
+                                        <div class="editable-controls mt-2 d-none">
+                                            <button class="btn btn-sm btn-success confirm-edit me-1">
+                                                <i class="bi bi-check"></i> Confirm
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger cancel-edit">
+                                                <i class="bi bi-x"></i> Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item editable-container" data-field="field_pubsub">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="detail-label">Pub/Sub Topic:</div>
+                                                <div class="detail-value editable-content">
+                                                    {{ event_type.event_type_pubsub_topic_name }}
+                                                </div>
                                             </div>
                                             <button class="btn btn-sm btn-outline-secondary begin-edit">
                                                 <i class="bi bi-pencil"></i> Editar

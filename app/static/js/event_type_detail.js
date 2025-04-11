@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'field_description': 'event_type_description',
             'field_action': 'event_type_action',
             'field_story_message': 'event_type_story_message',
+            'field_pubsub': 'event_type_pubsub_topic_name',
             'field_documentation': 'event_documentation_link'
         };
         
