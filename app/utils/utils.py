@@ -96,3 +96,25 @@ def get_secret(secret_name: str) -> str:
         print(f"Error retrieving the secret from GCP: {e}")
         raise Exception(e)
     return response.payload.data.decode('UTF-8')
+
+def format_payload_data(payload_data):
+        formatted = {}
+        
+        if not payload_data:
+            return formatted
+        
+        for item in payload_data:
+            key = item.get('key')
+            values = item.get('value', [{}])[0]  # Take the first element in the array
+            
+            # Getting the value that is not None
+            value = (
+                values.get('string_value') 
+                or values.get('int_value') 
+                or values.get('float_value') 
+                or values.get('double_value')
+            )
+            
+            formatted[key] = value
+        
+        return formatted

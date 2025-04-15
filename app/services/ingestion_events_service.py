@@ -1,6 +1,6 @@
-from utils.utils import BQ_CLIENT
+from utils.utils import BQ_CLIENT, bigquery, format_payload_data
 
-from typing import List, Dict, Any
+from typing import List, Dict
 
 class IngestionEventService:
 
@@ -69,6 +69,55 @@ class IngestionEventService:
         result = query_job.result()
         
         return [dict(row) for row in result]
+
+    @staticmethod
+    def get_event_by_uuid(project_id: str, dataset: str, tbl_ingestion_events: str, ingestion_event_id: str) -> Dict[str, any]:
+        query = f"""
+        SELECT 
+            source_id,
+            event_type_id,
+            event_logical_name,
+            event_type_topic_name,
+            event_payload_format,
+            ingestion_event_processing_stage,
+            ingestion_event_source,
+            event_created_by,
+            event_payload_data
+        FROM `{project_id}.{dataset}.{tbl_ingestion_events}`
+        WHERE event_uuid = @event_uuid
+        LIMIT 1;
+        """
+
+        job_config = bigquery.QueryJobConfig(query_parameters=[
+            bigquery.ScalarQueryParameter("event_uuid", "STRING", ingestion_event_id)
+        ])
+
+        try:
+            query_job = BQ_CLIENT.query(query, job_config=job_config)
+            result = query_job.result()
+            row = next(result)
+            
+            # Formatear los datos
+            formatted_data = {
+                'source_id': row.source_id,
+                'event_type_id': row.event_type_id,
+                'event_logical_name': row.event_logical_name,
+                'event_type_topic_name': row.event_type_topic_name,
+                'event_payload_format': row.event_payload_format,
+                'ingestion_event_processing_stage': row.ingestion_event_processing_stage,
+                'ingestion_event_source': row.ingestion_event_source,
+                'event_created_by': row.event_created_by,
+                'event_payload_data': format_payload_data(row.event_payload_data)
+            }            
+        except StopIteration:
+            print(f"No data for UUID: {ingestion_event_id}")
+            return None
+        except Exception as e:
+            errro_msg = f"Error in the request: {e}"
+            print(errro_msg)
+            raise Exception(errro_msg)
+
+        return formatted_data
 
     @staticmethod
     def get_total_count(project_id: str, dataset: str, tbl_clientes: str, tbl_envios: str, tbl_pedidos: str) -> int:

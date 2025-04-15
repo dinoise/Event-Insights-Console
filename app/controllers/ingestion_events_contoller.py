@@ -62,3 +62,35 @@ class IngestionEventController:
             }
         }), HTTPStatus.OK
     
+    @staticmethod
+    def get_ingestion_event_by_uuid(ingestion_event_id: str) -> tuple:
+        project_id = current_app.config.get('PROJECT_ID')
+        dataset = get_secret( current_app.config.get('BIGQUERY_DATASET_DELIVERNOW_EVENTS') )
+        tbl_ingestion_events = get_secret( current_app.config.get('BIGQUERY_TBL_INGESTION_EVENT') )
+        
+        try:
+            ingestion_event = IngestionEventService.get_event_by_uuid(project_id=project_id, 
+                                                    dataset=dataset,
+                                                    tbl_ingestion_events=tbl_ingestion_events,
+                                                    ingestion_event_id=ingestion_event_id)
+        except Exception as e:
+            error_msg = f"Error getting the ingestion event: {str(e)}"
+            return jsonify({
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "code": "error",
+                "message": error_msg
+            }), HTTPStatus.INTERNAL_SERVER_ERROR
+
+        if not ingestion_event:
+            return jsonify({
+                "status": HTTPStatus.NOT_FOUND,
+                "code": "error",
+                "data": None,
+                "message": "No data for that UUID"
+            }), HTTPStatus.NOT_FOUND
+        
+        return jsonify({
+            "status": HTTPStatus.OK,
+            "code": "success",
+            "data": ingestion_event
+        }), HTTPStatus.OK
