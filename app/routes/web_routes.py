@@ -1,11 +1,17 @@
 # ===================================
 # Module and Service Imports
 # ===================================
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, current_app
 from services.event_mapping_columns_service import EventMappingColumnsService
+from services.ingestion_events_service import IngestionEventService
 from services.event_mapping_service import EventMappingService
 from services.event_type_service import EventTypeService
 from services.source_service import SourceService
+
+# ===================================
+# Utils
+# ===================================
+from utils.utils import get_secret
 
 # ==============================
 # Blueprint Configuration
@@ -99,3 +105,16 @@ def show_source_type_by_id(source_id):
 @bp.route('/history')
 def show_history():
     return render_template('history.html')
+
+@bp.route('/history/<string:ingestion_event_id>')
+def show_history_by_uuid(ingestion_event_id):
+    project_id = current_app.config.get('PROJECT_ID')
+    dataset = get_secret( current_app.config.get('BIGQUERY_DATASET_DELIVERNOW_EVENTS') )
+    tbl_ingestion_events = get_secret( current_app.config.get('BIGQUERY_TBL_INGESTION_EVENT') )
+
+    ingestion_event = IngestionEventService.get_event_by_uuid(project_id=project_id, 
+                                                    dataset=dataset,
+                                                    tbl_ingestion_events=tbl_ingestion_events,
+                                                    ingestion_event_id=ingestion_event_id)
+
+    return render_template('history_detail.html', ingestion_event=ingestion_event)
