@@ -1,16 +1,31 @@
+# ===================================
+# Module and Service Imports
+# ===================================
 from flask import Blueprint, render_template
-
 from services.event_mapping_columns_service import EventMappingColumnsService
 from services.event_mapping_service import EventMappingService
 from services.event_type_service import EventTypeService
 from services.source_service import SourceService
 
+# ==============================
+# Blueprint Configuration
+# ==============================
 bp = Blueprint('web', __name__)
 
+# ==============================
+# Application Routes
+# ==============================
+
+# Main route: Home menu
 @bp.route('/')
 def menu():
     return render_template('index.html')
 
+# ==================================
+# Event Mappings Routes
+# ==================================
+
+# Display all event mappings
 @bp.route('/event-mappings')
 def show_event_mappings():
     mappings = EventMappingService.get_all_event_mappings()
@@ -18,6 +33,7 @@ def show_event_mappings():
     event_types = EventTypeService.get_all_event_types()        
     return render_template('event_mappings.html', mappings=mappings, sources=sources, event_types=event_types)
 
+# Display event mapping details by ID
 @bp.route('/event-mappings/<int:mapping_id>')
 def show_event_mapping_by_id(mapping_id):
     mapping = EventMappingService.get_event_mapping_by_pk(mapping_id)
@@ -42,29 +58,36 @@ def show_event_mapping_by_id(mapping_id):
 
     return render_template('event_mapping_detail.html', mapping=mapping, columns=columns, actual_source=actual_source, actual_event_type=actual_event_type, sources=sources, event_types=event_types)
 
+# ==================================
+# Event Types Routes
+# ==================================
+
+# Display all event types
 @bp.route('/event-types')
 def show_event_types():
     event_types = EventTypeService.get_all_event_types()        
     return render_template('event_types.html', event_types=event_types)
 
+# Display event type details by ID
 @bp.route('/event-types/<int:event_type_id>')
 def show_event_type_by_id(event_type_id):
     event_type = EventTypeService.get_event_type_by_pk(event_type_id)    
-
     associated_mappings = EventMappingService.get_all_event_mappings_by_event_type_id(event_type_id)
-
     return render_template('event_type_detail.html', event_type=event_type, associated_mappings=associated_mappings)
 
+# ==================================
+# Sources Routes
+# ==================================
+
+# Display all sources
 @bp.route('/sources')
 def show_sources():
     sources = SourceService.get_all_sources()   
     return render_template('sources.html', sources=sources)
 
-
+# Display source details by ID
 @bp.route('/sources/<int:source_id>')
 def show_source_type_by_id(source_id):
     source = SourceService.get_source_by_pk(source_id)
-
     associated_mappings = EventMappingService.get_all_event_mappings_by_source_id(source_id)
-
     return render_template('source_detail.html', source=source, associated_mappings=associated_mappings)
