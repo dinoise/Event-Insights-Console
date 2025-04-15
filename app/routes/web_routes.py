@@ -91,3 +91,11 @@ def show_source_type_by_id(source_id):
     source = SourceService.get_source_by_pk(source_id)
     associated_mappings = EventMappingService.get_all_event_mappings_by_source_id(source_id)
     return render_template('source_detail.html', source=source, associated_mappings=associated_mappings)
+
+# ==================================
+# History of Events Routes
+# ==================================
+
+@bp.route('/history')
+def show_history():
+    return render_template('history.html')
