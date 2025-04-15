@@ -14,6 +14,7 @@ class IngestionEventController:
     def get_ingestion_events() -> tuple:
         page = request.args.get('page', default=1, type=int)
         per_page = request.args.get('per_page', default=50, type=int)
+        search = request.args.get('search', default="", type=str)
         
         if page < 1 or per_page < 1 or per_page > 1000:
             return jsonify({
@@ -35,7 +36,8 @@ class IngestionEventController:
             tbl_envios=tbl_envios,
             tbl_pedidos=tbl_pedidos,
             page=page,
-            per_page=per_page
+            per_page=per_page,
+            search=search
         )
         
         total_events = IngestionEventService.get_total_count(

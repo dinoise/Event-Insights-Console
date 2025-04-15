@@ -12,9 +12,29 @@ class IngestionEventService:
         tbl_envios: str, 
         tbl_pedidos: str, 
         page: int = 1, 
-        per_page: int = 50
+        per_page: int = 50,
+        search: str = ""
     ) -> List[Dict[str, str]]:
         offset = (page - 1) * per_page
+        
+        query_params = []
+        search_condition = ""
+        
+        if search:
+            exact_param = search
+            like_param = f"%{search}%"
+            
+            query_params.extend([
+                bigquery.ScalarQueryParameter("exact_param", "STRING", exact_param),
+                bigquery.ScalarQueryParameter("like_param", "STRING", like_param)
+            ])
+            
+            search_condition = """
+                WHERE 
+                    uuid_evento_origen = @exact_param 
+                    OR source_table = @exact_param
+                    OR LOWER(evento_origen_mensaje) LIKE LOWER(@like_param)
+            """
         
         query = f"""
         WITH combined_events AS (
@@ -59,13 +79,18 @@ class IngestionEventService:
             source_table
         FROM 
             combined_events
+        {search_condition}
         ORDER BY 
             timestamp_creacion DESC
         LIMIT {per_page}
         OFFSET {offset}
         """
         
-        query_job = BQ_CLIENT.query(query)
+        job_config = bigquery.QueryJobConfig()
+        if query_params:
+            job_config.query_parameters = query_params
+        
+        query_job = BQ_CLIENT.query(query, job_config=job_config)
         result = query_job.result()
         
         return [dict(row) for row in result]
