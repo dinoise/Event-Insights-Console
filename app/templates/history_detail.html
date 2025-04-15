@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History Detail - {{ ingestion_event.event_logical_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/detail.css') }}" rel="stylesheet">
+    <style>
+        .payload-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .payload-table th, .payload-table td {
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+        .payload-table th {
+            background-color: #f8f9fa;
+            width: 30%;
+        }
+        .payload-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .null-value {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .badge-status {
+            font-size: 0.9em;
+            padding: 0.4em 0.6em;
+        }
+        .badge-completed {
+            background-color: #28a745;
+        }
+        .badge-error {
+            background-color: #dc3545;
+        }
+        .badge-processing {
+            background-color: #17a2b8;
+        }
+        .badge-pending {
+            background-color: #6c757d;
+        }
+        .section-title {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="detail-card">
+                    <!-- Encabezado -->
+                    <div class="detail-header d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="mb-1">{{ ingestion_event.event_logical_name }}</h2>
+                            <div class="d-flex align-items-center">
+                                <span class="badge badge-status 
+                                    {% if ingestion_event.ingestion_event_processing_stage == 'COMPLETED' %}badge-completed
+                                    {% elif ingestion_event.ingestion_event_processing_stage == 'ERROR' %}badge-error
+                                    {% elif ingestion_event.ingestion_event_processing_stage == 'PROCESSING' %}badge-processing
+                                    {% else %}badge-pending{% endif %}">
+                                    {{ ingestion_event.ingestion_event_processing_stage }}
+                                </span>
+                                <span class="ms-2 text-muted">ID: {{ ingestion_event.event_type_id }}</span>
+                            </div>
+                        </div>
+                        <a href="/history" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Back to History
+                        </a>
+                    </div>
+
+                    <!-- Información básica -->
+                    <h4 class="section-title">Basic Information</h4>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="detail-item">
+                                        <div class="detail-label">Source ID:</div>
+                                        <div class="detail-value">{{ ingestion_event.source_id }}</div>
+                                    </div>
+
+                                    <div class="detail-item">
+                                        <div class="detail-label">Event Type ID:</div>
+                                        <div class="detail-value">{{ ingestion_event.event_type_id }}</div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-label">Created By:</div>
+                                        <div class="detail-value">
+                                            {% if ingestion_event.event_created_by %}
+                                                {{ ingestion_event.event_created_by }}
+                                            {% else %}
+                                                <span class="null-value">Not specified</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-label">Payload Format:</div>
+                                        <div class="detail-value">{{ ingestion_event.event_payload_format }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="detail-item">
+                                        <div class="detail-label">Source:</div>
+                                        <div class="detail-value">{{ ingestion_event.ingestion_event_source }}</div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-label">Pub/Sub Topic Name:</div>
+                                        <div class="detail-value">
+                                            {% if ingestion_event.event_type_topic_name %}
+                                                {{ ingestion_event.event_type_topic_name }}
+                                            {% else %}
+                                                <span class="null-value">Not specified</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payload Data -->
+                    <h4 class="section-title">Payload Data</h4>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            {% if ingestion_event.event_payload_data %}
+                                <div class="table-responsive">
+                                    <table class="payload-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Key</th>
+                                                <th>Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for key, value in ingestion_event.event_payload_data.items() %}
+                                                <tr>
+                                                    <td><strong>{{ key }}</strong></td>
+                                                    <td>
+                                                        {% if value is none %}
+                                                            <span class="null-value">null</span>
+                                                        {% elif value is boolean %}
+                                                            {{ "Yes" if value else "No" }}
+                                                        {% else %}
+                                                            {{ value|tojson }}
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">No payload data available</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Raw Data (opcional) -->
+                    <h4 class="section-title">Raw Event Data</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <pre>{{ ingestion_event|tojson(indent=4) }}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
