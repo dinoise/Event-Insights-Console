@@ -47,14 +47,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const searchTerm = searchInput.value.trim();
         
-        console.info( `window.location.origin ${window.location.origin}` )
-
-        const url = `${window.location.origin}/api/ingestion-events?page=${currentPage}&per_page=${perPage}${
+        const url = `/api/ingestion-events?page=${currentPage}&per_page=${perPage}${
             searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ''
         }`;
 
-        console.info( `url ${url}` )
-                
         fetch(url, {
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
