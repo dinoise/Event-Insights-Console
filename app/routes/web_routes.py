@@ -104,6 +104,7 @@ def show_source_type_by_id(source_id):
 
 @bp.route('/history')
 def show_history():
+    
     return render_template('history.html')
 
 @bp.route('/history/<string:ingestion_event_id>')
