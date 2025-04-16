@@ -1,3 +1,6 @@
+import { getCookie } from './utils.js'
+
+
 document.addEventListener('DOMContentLoaded', function() {
     // Variables de estado
     let currentPage = 1;
@@ -43,14 +46,19 @@ document.addEventListener('DOMContentLoaded', function() {
         tableBody.innerHTML = '';
         
         const searchTerm = searchInput.value.trim();
+        
         const url = `/api/ingestion-events?page=${currentPage}&per_page=${perPage}${
             searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ''
         }`;
-        
-        fetch(url)
+                
+        fetch(url, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
