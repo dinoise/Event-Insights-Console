@@ -1,6 +1,7 @@
 # Flask libraries
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # App
 from config import config_by_name
@@ -15,6 +16,8 @@ db = SQLAlchemy()
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     DB_HOST = get_secret( app.config.get("DB_HOST") )
     DB_PORT = get_secret( app.config.get("DB_PORT") )

@@ -47,9 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const searchTerm = searchInput.value.trim();
         
-        console.info( `window.location.host ${window.location.host}` )
+        console.info( `window.location.origin ${window.location.origin}` )
 
-        const url = `//${window.location.host}/api/ingestion-events?page=${currentPage}&per_page=${perPage}${
+        const url = `${window.location.origin}/api/ingestion-events?page=${currentPage}&per_page=${perPage}${
             searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ''
         }`;
 
