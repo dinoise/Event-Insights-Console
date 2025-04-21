@@ -7,7 +7,9 @@ class IngestionEventService:
     @staticmethod
     def get_all_ingestion_events(
         project_id: str, 
-        dataset: str, 
+        dataset_silver: str,
+        dataset_raw: str,
+        tbl_ingestion_events: str,
         tbl_clientes: str, 
         tbl_envios: str, 
         tbl_pedidos: str, 
@@ -31,8 +33,8 @@ class IngestionEventService:
             
             search_condition = """
                 WHERE 
-                    uuid_evento_origen = @exact_param 
-                    OR source_table = @exact_param
+                    CE.uuid_evento_origen = @exact_param 
+                    OR LOWER(IE.event_logical_name) LIKE LOWER(@like_param)
                     OR LOWER(evento_origen_mensaje) LIKE LOWER(@like_param)
             """
         
@@ -41,10 +43,9 @@ class IngestionEventService:
             SELECT 
                 uuid_evento_origen,
                 evento_origen_mensaje,
-                timestamp_creacion,
-                '{tbl_clientes}' AS source_table
+                timestamp_creacion
             FROM 
-                `{project_id}.{dataset}.{tbl_clientes}`
+                `{project_id}.{dataset_silver}.{tbl_clientes}`
             WHERE 
                 uuid_evento_origen IS NOT NULL
 
@@ -53,10 +54,9 @@ class IngestionEventService:
             SELECT 
                 uuid_evento_origen,
                 evento_origen_mensaje,
-                timestamp_creacion,
-                '{tbl_envios}' AS source_table
+                timestamp_creacion
             FROM 
-                `{project_id}.{dataset}.{tbl_envios}`
+                `{project_id}.{dataset_silver}.{tbl_envios}`
             WHERE 
                 uuid_evento_origen IS NOT NULL
 
@@ -65,20 +65,21 @@ class IngestionEventService:
             SELECT 
                 uuid_evento_origen,
                 evento_origen_mensaje,
-                timestamp_creacion,
-                '{tbl_pedidos}' AS source_table
+                timestamp_creacion
             FROM 
-                `{project_id}.{dataset}.{tbl_pedidos}`
+                `{project_id}.{dataset_silver}.{tbl_pedidos}`
             WHERE 
                 uuid_evento_origen IS NOT NULL
         )
         SELECT 
-            uuid_evento_origen,
-            evento_origen_mensaje,
-            timestamp_creacion,
-            source_table
-        FROM 
-            combined_events
+            CE.uuid_evento_origen,
+            CE.evento_origen_mensaje,
+            IE.event_logical_name,
+            CE.timestamp_creacion
+        FROM
+            combined_events AS CE
+        LEFT JOIN `{project_id}.{dataset_raw}.{tbl_ingestion_events}` AS IE
+            ON IE.event_uuid = CE.uuid_evento_origen
         {search_condition}
         ORDER BY 
             timestamp_creacion DESC
