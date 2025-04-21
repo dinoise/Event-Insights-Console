@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             row.innerHTML = `
                 <td>${item.uuid_evento_origen}</td>
-                <td>${item.source_table}</td>
+                <td>${item.event_logical_name}</td>
                 <td>${item.evento_origen_mensaje || '-'}</td>
                 <td>${formattedTimestamp}</td>
                 <td class="actions-column">
