@@ -24,14 +24,19 @@ class IngestionEventController:
             }), HTTPStatus.BAD_REQUEST
         
         project_id = current_app.config.get('PROJECT_ID')
-        dataset = get_secret( current_app.config.get('BIGQUERY_DATASET') )
+        dataset_silver = get_secret( current_app.config.get('BIGQUERY_DATASET') )
         tbl_clientes = get_secret( current_app.config.get('BIGQUERY_TBL_CLIENTES') )
         tbl_envios = get_secret( current_app.config.get('BIGQUERY_TBL_ENVIOS') )
         tbl_pedidos = get_secret( current_app.config.get('BIGQUERY_TBL_PEDIDOS') )
 
+        dataset_raw = get_secret( current_app.config.get('BIGQUERY_DATASET_DELIVERNOW_EVENTS') )
+        tbl_ingestion_events = get_secret( current_app.config.get('BIGQUERY_TBL_INGESTION_EVENT') )
+
         ingestion_events = IngestionEventService.get_all_ingestion_events(
             project_id=project_id,
-            dataset=dataset,
+            dataset_raw=dataset_raw,
+            dataset_silver=dataset_silver,
+            tbl_ingestion_events=tbl_ingestion_events,
             tbl_clientes=tbl_clientes,
             tbl_envios=tbl_envios,
             tbl_pedidos=tbl_pedidos,
@@ -42,7 +47,7 @@ class IngestionEventController:
         
         total_events = IngestionEventService.get_total_count(
             project_id=project_id,
-            dataset=dataset,
+            dataset=dataset_silver,
             tbl_clientes=tbl_clientes,
             tbl_envios=tbl_envios,
             tbl_pedidos=tbl_pedidos
