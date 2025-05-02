@@ -95,7 +95,7 @@ class EventTypeController:
             'event_type_name':(str, lambda x: 0 < len(x) <= 150),
             'event_type_description': (str, lambda x: 0 < len(x) <= 150),
             'event_type_action': (str, lambda x: 0 < len(x) <= 150),
-            'event_type_story_message': (str, lambda x: 0 < len(x) <= 150),
+            'event_type_story_message': (str, lambda x: 0 < len(x) <= 1000),
             'event_type_pubsub_topic_name': (str, lambda x: 0 < len(x) <= 150),
             'event_documentation_link': (str, lambda x: 0 < len(x) <= 150),
         }
