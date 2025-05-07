@@ -119,3 +119,8 @@ def show_history_by_uuid(ingestion_event_id):
                                                     ingestion_event_id=ingestion_event_id)
 
     return render_template('history_detail.html', ingestion_event=ingestion_event)
+
+@bp.route('/chatbot')
+def show_chatbot():
+    
+    return render_template('chatbot.html')
