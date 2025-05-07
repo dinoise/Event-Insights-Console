@@ -123,4 +123,4 @@ def show_history_by_uuid(ingestion_event_id):
 @bp.route('/chatbot')
 def show_chatbot():
     
-    return render_template('chatbot.html')
+    return render_template('chatbot.html', messages=[])
