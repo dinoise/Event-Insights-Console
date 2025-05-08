@@ -9,6 +9,8 @@ from langchain_core.runnables import RunnableConfig
 from datetime import datetime
 import json
 
+from .assistant_template import AssistantTemplate
+
 class AgentState(TypedDict):
     messages: Annotated[List[Union[HumanMessage, AIMessage]], add_messages]
     user_info: Dict[str, Any]
@@ -18,17 +20,41 @@ class UserGraph:
     def __init__(self, llm: BaseChatModel, tools: List[StructuredTool]):
         self.llm = llm
         self.tools = tools
-        self.llm_with_tools = llm.bind_tools(tools)
+        self.llm_with_tools = self._initialize_llm_with_tools()
         self.graph = None
         self.compiled_graph = None
-        self.conversation_history = []  # Nuevo atributo para almacenar historial completo
-        self.initial_state = {
-            "messages": [AIMessage(content="Bienvenido al asistente virtual de Liverpool. ¿En qué te puedo ayudar?")],
+        self.conversation_history = []
+        self.initial_state = self._create_initial_state()
+
+        # Inicializar con el mensaje de bienvenida
+        self._add_to_history(self.initial_state["messages"][0])
+    
+    def _get_system_template(self):
+        return AssistantTemplate.get_system_prompt()
+
+    def _initialize_llm_with_tools(self):
+        """Configura la LLM con herramientas y el template de sistema"""
+        from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+        from langchain_core.messages import SystemMessage
+        
+        # Definir el prompt estructurado
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content=self._get_system_template()),
+            MessagesPlaceholder(variable_name="messages"),
+        ])
+        
+        return prompt | self.llm.bind_tools(self.tools)
+    
+    def _create_initial_state(self):
+        """Crea el estado inicial con el mensaje de bienvenida personalizado"""
+        welcome_message = AIMessage(
+            content=AssistantTemplate.get_initial_state()
+        )
+        return {
+            "messages": [welcome_message],
             "user_info": {},
             "session_data": {}
         }
-        # Inicializar con el mensaje de bienvenida
-        self._add_to_history(self.initial_state["messages"][0])
     
     def create_graph(self) -> None:
         """Crea el grafo con los nodos necesarios"""
