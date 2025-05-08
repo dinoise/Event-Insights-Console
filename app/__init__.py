@@ -6,9 +6,11 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 # App
 from config import config_by_name
 from utils.utils import get_secret
+from llm_orchestrator.llm_orchestrator import LLMOrchestrator
 
 # Aux libraries
 from urllib.parse import quote_plus
+from os import environ
 
 # SQL Database
 db = SQLAlchemy()
@@ -37,5 +39,8 @@ def create_app(config_name):
     # Init the app routes
     from routes import init_app_routes
     init_app_routes(app)
+
+    app.secret_key = environ.get('SECRET_KEY', None)
+    app.orchestrator = LLMOrchestrator(model_name=app.config.get("MODEL_NAME"))
 
     return app

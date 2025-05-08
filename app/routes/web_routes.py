@@ -1,7 +1,7 @@
 # ===================================
 # Module and Service Imports
 # ===================================
-from flask import Blueprint, render_template, current_app
+from flask import Blueprint, render_template, current_app, session
 from services.event_mapping_columns_service import EventMappingColumnsService
 from services.ingestion_events_service import IngestionEventService
 from services.event_mapping_service import EventMappingService
@@ -120,7 +120,29 @@ def show_history_by_uuid(ingestion_event_id):
 
     return render_template('history_detail.html', ingestion_event=ingestion_event)
 
+# ==================================
+# Chatbot Routes
+# ==================================
+
 @bp.route('/chatbot')
 def show_chatbot():
-    
-    return render_template('chatbot.html', messages=[])
+    try:
+        orchestrator = current_app.orchestrator
+        print(f"orchestrator {orchestrator}")
+
+        # Crear nueva sesión si es necesario
+        if 'uuid' not in session or not orchestrator.user_session_exists(session['uuid']):
+            print("NEW SESSION")
+            # Usar asyncio.run para ejecutar la corrutina
+            session['uuid'] = orchestrator.user_session_create_sync(session)
+        
+        history = orchestrator.get_full_history(session['uuid'])
+
+        return render_template(
+            'chatbot.html', 
+            messages=history,
+        )
+    except Exception as e:
+        err = str(e)
+        print(err)
+        return err, 500
