@@ -4,6 +4,7 @@ from __init__ import create_app
 
 config_name = getenv("FLASK_ENV", "dev")
 print(f"ENV {config_name}")
+
 app = create_app(config_name)
 
 if __name__ == '__main__':
