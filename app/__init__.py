@@ -12,6 +12,11 @@ from llm_orchestrator.llm_orchestrator import LLMOrchestrator
 from urllib.parse import quote_plus
 from os import environ
 
+# LangChaing libraries
+from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_community.cache import InMemoryCache
+from langchain.globals import set_llm_cache
+
 # Solo una instancia de SQLAlchemy
 db = SQLAlchemy()
 
@@ -42,7 +47,7 @@ def create_app(config_name):
     # Configuración de SQLAlchemy con binds
     app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
     
-    
+
     app.config['SQLALCHEMY_BINDS'] = {
         'postgres': f'postgresql+psycopg2://{PG_USER}:{encoded_pg_password}@{PG_HOST}:{PG_PORT}/{PG_NAME}'
     }
@@ -55,7 +60,14 @@ def create_app(config_name):
     from routes import init_app_routes
     init_app_routes(app)
 
+    # Init the orchestrator for the LLM
     app.secret_key = environ.get('SECRET_KEY', None)
     app.orchestrator = LLMOrchestrator(model_name=app.config.get("MODEL_NAME"))
+
+    # Init embed service
+    set_llm_cache(InMemoryCache())
+    app.embed_service = VertexAIEmbeddings(
+        model_name=app.config.get("EMBEDDING_MODEL_NAME")
+    )
 
     return app

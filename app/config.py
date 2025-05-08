@@ -10,6 +10,7 @@ class Config:
     PROJECT_ID = getenv("GOOGLE_CLOUD_PROJECT")
 
     MODEL_NAME = getenv("MODEL_NAME")
+    EMBEDDING_MODEL_NAME = getenv("EMBEDDING_MODEL_NAME")
     
 class DevelopmentConfig(Config):
     """Configurations for development"""
