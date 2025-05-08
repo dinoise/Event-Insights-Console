@@ -54,7 +54,7 @@ jobs:
             --image ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-prod:latest \
             --platform managed \
             --region ${{ secrets.REGION }} \
-            --set-env-vars FLASK_ENV=prod,SECRET_KEY=${{secrets.SECRET_KEY}},MODEL_NAME=${{secrets.MODEL_NAME}},CLOUD_VAR=true,GOOGLE_CLOUD_PROJECT=${{ secrets.EST_52_PROJECT_ID }},BASE_URL=${{secrets.BASE_URL_API_PROD}} \
+            --set-env-vars FLASK_ENV=prod,SECRET_KEY=${{secrets.SECRET_KEY}},MODEL_NAME=${{secrets.MODEL_NAME}},CLOUD_VAR=true,GOOGLE_CLOUD_PROJECT=${{ secrets.EST_52_PROJECT_ID }},BASE_URL=${{secrets.BASE_URL_API_PROD}},EMBEDDING_MODEL_NAME=${{secrets.EMBEDDING_MODEL_NAME}} \
             --allow-unauthenticated
 
       - name: Deploy to Cloud Run (Development)
@@ -64,5 +64,5 @@ jobs:
             --image ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.EST_52_PROJECT_ID }}/${{ secrets.REPO_NAME_GCR }}/${{ secrets.IMAGE_SRV_DELIVERNOW_MNG }}-dev:latest \
             --platform managed \
             --region ${{ secrets.REGION }} \
-            --set-env-vars FLASK_ENV=dev,SECRET_KEY=${{secrets.SECRET_KEY}},MODEL_NAME=${{secrets.MODEL_NAME}},CLOUD_VAR=true,GOOGLE_CLOUD_PROJECT=${{ secrets.EST_52_PROJECT_ID }},BASE_URL=${{secrets.BASE_URL_API_DEV}} \
+            --set-env-vars FLASK_ENV=dev,SECRET_KEY=${{secrets.SECRET_KEY}},MODEL_NAME=${{secrets.MODEL_NAME}},CLOUD_VAR=true,GOOGLE_CLOUD_PROJECT=${{ secrets.EST_52_PROJECT_ID }},BASE_URL=${{secrets.BASE_URL_API_DEV}},EMBEDDING_MODEL_NAME=${{secrets.EMBEDDING_MODEL_NAME}} \
             --allow-unauthenticated
