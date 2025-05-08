@@ -12,7 +12,7 @@ from llm_orchestrator.llm_orchestrator import LLMOrchestrator
 from urllib.parse import quote_plus
 from os import environ
 
-# SQL Database
+# Solo una instancia de SQLAlchemy
 db = SQLAlchemy()
 
 def create_app(config_name):
@@ -21,19 +21,34 @@ def create_app(config_name):
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-    DB_HOST = get_secret( app.config.get("DB_HOST") )
-    DB_PORT = get_secret( app.config.get("DB_PORT") )
-    DB_USER = get_secret( app.config.get("DB_USER") )
-    DB_PASSWORD = get_secret( app.config.get("DB_PASSWORD") )
-    DB_NAME = get_secret( app.config.get("DB_NAME") )
+    # Configuración para MySQL
+    DB_HOST = get_secret(app.config.get("DB_HOST"))
+    DB_PORT = get_secret(app.config.get("DB_PORT"))
+    DB_USER = get_secret(app.config.get("DB_USER"))
+    DB_PASSWORD = get_secret(app.config.get("DB_PASSWORD"))
+    DB_NAME = get_secret(app.config.get("DB_NAME"))
 
     encoded_password = quote_plus(DB_PASSWORD)
+    
+    # Configuración para PostgreSQL
+    PG_HOST = get_secret(app.config.get("PG_HOST"))
+    PG_PORT = get_secret(app.config.get("PG_PORT"))
+    PG_USER = get_secret(app.config.get("PG_USER"))
+    PG_PASSWORD = get_secret(app.config.get("PG_PASSWORD"))
+    PG_NAME = get_secret(app.config.get("PG_NAME"))
 
-    # Configura la URI
+    encoded_pg_password = quote_plus(PG_PASSWORD)
+
+    # Configuración de SQLAlchemy con binds
     app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+    
+    
+    app.config['SQLALCHEMY_BINDS'] = {
+        'postgres': f'postgresql+psycopg2://{PG_USER}:{encoded_pg_password}@{PG_HOST}:{PG_PORT}/{PG_NAME}'
+    }
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Link SQLAlchemy with the Flask app 
+    # Inicializa la única instancia de SQLAlchemy
     db.init_app(app)
 
     # Init the app routes

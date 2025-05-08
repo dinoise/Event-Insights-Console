@@ -21,6 +21,8 @@ pytz           # Timezone definitions for Python
 ##########################
 flask-sqlalchemy     # SQLAlchemy integration for Flask
 pymysql              # MySQL client library (used with SQLAlchemy)
+psycopg2-binary      # PostgreSQL client library (used with SQLAlchemy)
+pgvector             # Vector datatype for storing embeddings
 
 ##################
 # Security
