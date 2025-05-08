@@ -1,0 +1,182 @@
+import json
+
+from typing import Annotated, TypedDict, Union, Dict, Any, List
+
+from langgraph.graph import StateGraph
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_core.tools import StructuredTool
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.language_models import BaseChatModel
+from langchain_core.runnables import RunnableConfig
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+from datetime import datetime
+
+from .assistant_template import AssistantTemplate
+
+class AgentState(TypedDict):
+    messages: Annotated[List[Union[HumanMessage, AIMessage]], add_messages]
+    user_info: Dict[str, Any]
+    session_data: Dict[str, Any]
+
+class UserGraph:
+    def __init__(self, llm: BaseChatModel, tools: List[StructuredTool]):
+        self.llm = llm
+        self.tools = tools
+        self.llm_with_tools = self._initialize_llm_with_tools()
+        self.graph = None
+        self.compiled_graph = None
+        self.conversation_history = []
+        self.initial_state = self._create_initial_state()
+
+        # Inicializar con el mensaje de bienvenida
+        self._add_to_history(self.initial_state["messages"][0])
+    
+    def _get_system_template(self):
+        return AssistantTemplate.get_system_prompt()
+
+    def _initialize_llm_with_tools(self):
+        """Configura la LLM con herramientas y el template de sistema"""
+
+        # Definir el prompt estructurado
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content=self._get_system_template()),
+            MessagesPlaceholder(variable_name="messages"),
+        ])
+        
+        return prompt | self.llm.bind_tools(self.tools)
+    
+    def _create_initial_state(self):
+        """Crea el estado inicial con el mensaje de bienvenida personalizado"""
+        welcome_message = AIMessage(
+            content=AssistantTemplate.get_initial_state()
+        )
+        return {
+            "messages": [welcome_message],
+            "user_info": {},
+            "session_data": {}
+        }
+    
+    def create_graph(self) -> None:
+        """Crea el grafo con los nodos necesarios"""
+        graph_builder = StateGraph(AgentState)
+        
+        graph_builder.add_node("chatbot", self._chatbot_node)
+        tool_node = ToolNode(tools=self.tools)
+        graph_builder.add_node("tools", tool_node)
+        
+        graph_builder.add_conditional_edges("chatbot", tools_condition)
+        graph_builder.add_edge("tools", "chatbot")
+        graph_builder.set_entry_point("chatbot")
+        
+        self.graph = graph_builder
+    
+    def compile_graph(self) -> None:
+        """Compila el grafo para su ejecución"""
+        if self.graph is None:
+            self.create_graph()
+        self.compiled_graph = self.graph.compile()
+    
+    def invoke_graph(self, user_input: str) -> Dict[str, Any]:
+        """
+        Invoca el grafo con el input del usuario usando el estado interno.
+        
+        Args:
+            user_input: Mensaje del usuario
+            
+        Returns:
+            Estado actualizado después de procesar el input
+        """
+        if not hasattr(self, 'compiled_graph'):
+            self.compile_graph()
+        
+        # Crear estado actual basado en el historial
+        current_state = {
+            "messages": self._get_message_objects(),  # Recupera todos los mensajes del historial
+        }
+        
+        # Agregar nuevo mensaje del usuario
+        user_message = HumanMessage(content=user_input)
+        current_state["messages"].append(user_message)
+        self._add_to_history(user_message)
+        
+        # Ejecutar el grafo
+        result = self.compiled_graph.invoke(
+            current_state,
+            config=RunnableConfig(configurable={"user_id": "some_user_id"})
+        )
+        
+        # Agregar respuesta al historial y actualizar estado
+        if result["messages"] and len(result["messages"]) > len(current_state["messages"]):
+            self._add_to_history(result["messages"][-1])
+        
+        return result
+
+    def _get_message_objects(self) -> List[Union[HumanMessage, AIMessage]]:
+        """Convierte el historial interno en objetos Message para LangChain"""
+        messages = []
+        for item in self.conversation_history:
+            if item["type"] == "human":
+                messages.append(HumanMessage(content=item["content"]))
+            elif item["type"] == "ai":
+                messages.append(AIMessage(content=item["content"]))
+        return messages
+    
+    def _add_to_history(self, message: Union[HumanMessage, AIMessage]):
+        """Añade un mensaje al historial de conversación"""
+        entry = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "human" if isinstance(message, HumanMessage) else "ai",
+            "content": message.content,
+            "metadata": {
+                "user_info": getattr(message, "user_info", {}),
+                "session_data": getattr(message, "session_data", {})
+            }
+        }
+        self.conversation_history.append(entry)
+    
+    def get_full_history(self) -> List[Dict[str, Any]]:
+        """Devuelve el historial completo de la conversación"""
+        return self.conversation_history
+    
+    def get_last_message(self) -> Dict[str, Any]:
+        """Devuelve el historial completo de la conversación"""
+        return self.conversation_history[-1]
+
+    def get_formatted_history(self) -> List[Dict[str, Any]]:
+        """Devuelve el historial en formato para la UI"""
+        return [{
+            "type": msg["type"],
+            "data": {
+                "content": msg["content"],
+                "timestamp": msg["timestamp"]
+            }
+        } for msg in self.conversation_history]
+    
+    def _chatbot_node(self, state: AgentState) -> Dict[str, Any]:
+        """Nodo principal del chatbot que usa la LLM"""
+        response = self.llm_with_tools.invoke(state["messages"])
+        return {"messages": [response]}
+    
+    def _update_user_info(self, state: AgentState) -> None:
+        """Extrae información del usuario del historial de mensajes"""
+        for msg in state["messages"]:
+            if isinstance(msg, HumanMessage):
+                content = msg.content.lower()
+                if "mi nombre es" in content:
+                    name = content.split("mi nombre es")[1].strip()
+                    state["user_info"]["name"] = name
+                elif "me llamo" in content:
+                    name = content.split("me llamo")[1].strip()
+                    state["user_info"]["name"] = name
+    
+    def save_conversation(self, file_path: str) -> None:
+        """Guarda el historial de conversación en un archivo JSON"""
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(self.conversation_history, f, ensure_ascii=False, indent=2)
+    
+    def load_conversation(self, file_path: str) -> None:
+        """Carga un historial de conversación desde un archivo JSON"""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            self.conversation_history = json.load(f)

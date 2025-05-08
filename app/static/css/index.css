@@ -4,6 +4,7 @@
     --accent-color: #f6c23e;
     --dark-color: #5a5c69;
     --purple-color: #8811f7;
+    --pink-color: #ef11f7;
 }
 
 body {
@@ -55,6 +56,10 @@ body {
 }
 
 .card-history {
+    border-left: 4px solid var(--pink-color);
+}
+
+.card-chatbot {
     border-left: 4px solid var(--purple-color);
 }
 
@@ -98,6 +103,11 @@ body {
 }
 
 .btn-history {
+    background-color: var(--pink-color);
+    color: white;
+}
+
+.btn-chatbot {
     background-color: var(--purple-color);
     color: white;
 }

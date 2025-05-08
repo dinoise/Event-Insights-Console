@@ -1,10 +1,41 @@
-flask
-gunicorn
-google-cloud-bigquery
-google-cloud-secret-manager
-google-cloud-logging
-pytz
-flask-sqlalchemy
-pymysql
-cryptography
-marshmallow-sqlalchemy
+#############################
+# Web Framework & Deployment
+#############################
+flask          # Web framework
+gunicorn       # Production WSGI HTTP server for Flask apps
+
+##########################
+# Google Cloud SDKs
+##########################
+google-cloud-bigquery       # BigQuery client library
+google-cloud-secret-manager # Secret Manager client library
+google-cloud-logging        # Cloud Logging client library
+
+##################
+# Utilities
+##################
+pytz           # Timezone definitions for Python
+
+##########################
+# Database & ORM
+##########################
+flask-sqlalchemy     # SQLAlchemy integration for Flask
+pymysql              # MySQL client library (used with SQLAlchemy)
+
+##################
+# Security
+##################
+cryptography         # Cryptographic recipes and primitives
+
+##########################
+# Serialization & Schema
+##########################
+marshmallow-sqlalchemy  # Object serialization/deserialization with SQLAlchemy support
+
+#############################
+# AI & LLM Integrations
+#############################
+langchain
+langchain-community
+langchain-google-vertexai 
+langgraph

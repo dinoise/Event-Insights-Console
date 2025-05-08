@@ -1,10 +1,15 @@
 # config.py
 from os import getenv
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables
 
 class Config:
     """Configuraciones comunes"""
     FLASK_ENV = getenv("FLASK_ENV", "dev")
     PROJECT_ID = getenv("GOOGLE_CLOUD_PROJECT")
+
+    MODEL_NAME = getenv("MODEL_NAME")
     
 class DevelopmentConfig(Config):
     """Configurations for development"""
