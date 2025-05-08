@@ -41,6 +41,7 @@ def initialize_tools():
             Este es el primer paso que se debe realizar cuando se piden datos de un cliente, un pedido 
             o un envío. Busca información en la base de datos de Liverpool.
             Sólo devuelve la información obtenida de este Tool.
+            Devuelve la información en una tabla con formato Markdown
             Ejemplo de uso: Buscar información del cliente con ID CL12345
             """,
             args_schema=QueryInput,
