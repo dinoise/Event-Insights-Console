@@ -78,23 +78,25 @@ class UserGraph:
             self.create_graph()
         self.compiled_graph = self.graph.compile()
     
-    def invoke_graph(self, user_input: str, current_state: Dict[str, Any] = None) -> Dict[str, Any]:
+    def invoke_graph(self, user_input: str) -> Dict[str, Any]:
         """
-        Invoca el grafo con el input del usuario.
+        Invoca el grafo con el input del usuario usando el estado interno.
         
         Args:
             user_input: Mensaje del usuario
-            current_state: Estado actual de la conversación
             
         Returns:
             Estado actualizado después de procesar el input
         """
-        if self.graph is None:
+        if not hasattr(self, 'compiled_graph'):
             self.compile_graph()
         
-        current_state = current_state or self.initial_state.copy()
+        # Crear estado actual basado en el historial
+        current_state = {
+            "messages": self._get_message_objects(),  # Recupera todos los mensajes del historial
+        }
         
-        # Agregar mensaje del usuario al historial
+        # Agregar nuevo mensaje del usuario
         user_message = HumanMessage(content=user_input)
         current_state["messages"].append(user_message)
         self._add_to_history(user_message)
@@ -105,12 +107,21 @@ class UserGraph:
             config=RunnableConfig(configurable={"user_id": "some_user_id"})
         )
         
-        # Agregar respuesta al historial
+        # Agregar respuesta al historial y actualizar estado
         if result["messages"] and len(result["messages"]) > len(current_state["messages"]):
             self._add_to_history(result["messages"][-1])
         
-        self._update_user_info(result)
         return result
+
+    def _get_message_objects(self) -> List[Union[HumanMessage, AIMessage]]:
+        """Convierte el historial interno en objetos Message para LangChain"""
+        messages = []
+        for item in self.conversation_history:
+            if item["type"] == "human":
+                messages.append(HumanMessage(content=item["content"]))
+            elif item["type"] == "ai":
+                messages.append(AIMessage(content=item["content"]))
+        return messages
     
     def _add_to_history(self, message: Union[HumanMessage, AIMessage]):
         """Añade un mensaje al historial de conversación"""
@@ -129,6 +140,10 @@ class UserGraph:
         """Devuelve el historial completo de la conversación"""
         return self.conversation_history
     
+    def get_last_message(self) -> Dict[str, Any]:
+        """Devuelve el historial completo de la conversación"""
+        return self.conversation_history[-1]
+
     def get_formatted_history(self) -> List[Dict[str, Any]]:
         """Devuelve el historial en formato para la UI"""
         return [{

@@ -97,17 +97,11 @@ class LLMOrchestrator:
             session_id = self.user_session_create()
         
         user_graph = self.get_user_session(session_id)
-        current_state = user_graph.initial_state  # En una implementación real, recuperarías el estado actual
         
         # Procesar el mensaje
-        new_state = user_graph.invoke_graph(user_input, current_state)
+        user_graph.invoke_graph(user_input)
         
         # Obtener historial para la respuesta
-        history = user_graph.get_conversation_history(new_state)
+        last_message = user_graph.get_last_message()
         
-        return {
-            "session_id": session_id,
-            "response": history[-1]["data"]["content"] if history else "",
-            "history": history,
-            "user_info": new_state["user_info"]
-        }
+        return last_message
