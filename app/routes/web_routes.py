@@ -133,8 +133,7 @@ def show_chatbot():
         # Crear nueva sesión si es necesario
         if 'uuid' not in session or not orchestrator.user_session_exists(session['uuid']):
             print("NEW SESSION")
-            # Usar asyncio.run para ejecutar la corrutina
-            session['uuid'] = orchestrator.user_session_create_sync(session)
+            session['uuid'] = orchestrator.user_session_create()
         
         history = orchestrator.get_full_history(session['uuid'])
 

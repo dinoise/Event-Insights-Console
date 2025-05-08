@@ -41,12 +41,8 @@ class LLMOrchestrator:
     def user_session_exists(self, session_id: str) -> bool:
         """Verifica si existe una sesión de usuario"""
         return session_id in self._user_sessions
-    
-    def user_session_create_sync(self, session_data: dict) -> str:
-        """Versión síncrona para usar en rutas Flask normales"""
-        return asyncio.run(self.user_session_create(session_data))
-    
-    async def user_session_create(self, session_data: Dict[str, Any] = None) -> str:
+        
+    def user_session_create(self) -> str:
         """Crea una nueva sesión de usuario y devuelve su ID"""
         print("Crear session!")
         session_id = str(uuid.uuid4())
@@ -58,7 +54,7 @@ class LLMOrchestrator:
         print(f"Done!")
         
         print(f"Initializing tools...")
-        tools = await self._initialize_tools()
+        tools = self._initialize_tools()
         print(f"Done!")
         
         print("Creting graph...")
@@ -78,7 +74,7 @@ class LLMOrchestrator:
         
         return session_id
     
-    async def _initialize_tools(self) -> list:
+    def _initialize_tools(self) -> list:
         """Inicializa las herramientas para el agente"""
         
         return initialize_tools(self.client_session)
@@ -86,7 +82,7 @@ class LLMOrchestrator:
     def get_full_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Procesa un mensaje del usuario a través del grafo"""
         if not self.user_session_exists(session_id):
-            session_id = self.user_session_create_sync()
+            session_id = self.user_session_create()
         
         user_graph = self.get_user_session(session_id)
         
@@ -95,16 +91,16 @@ class LLMOrchestrator:
         
         return history
 
-    async def process_message(self, session_id: str, user_input: str) -> Dict[str, Any]:
+    def process_message(self, session_id: str, user_input: str) -> Dict[str, Any]:
         """Procesa un mensaje del usuario a través del grafo"""
         if not self.user_session_exists(session_id):
-            session_id = await self.user_session_create()
+            session_id = self.user_session_create()
         
         user_graph = self.get_user_session(session_id)
         current_state = user_graph.initial_state  # En una implementación real, recuperarías el estado actual
         
         # Procesar el mensaje
-        new_state = await user_graph.invoke_graph(user_input, current_state)
+        new_state = user_graph.invoke_graph(user_input, current_state)
         
         # Obtener historial para la respuesta
         history = user_graph.get_conversation_history(new_state)

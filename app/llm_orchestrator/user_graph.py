@@ -1,13 +1,17 @@
+import json
+
 from typing import Annotated, TypedDict, Union, Dict, Any, List
-from langgraph.graph.message import add_messages
+
 from langgraph.graph import StateGraph
+from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.tools import StructuredTool
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.runnables import RunnableConfig
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
 from datetime import datetime
-import json
 
 from .assistant_template import AssistantTemplate
 
@@ -34,9 +38,7 @@ class UserGraph:
 
     def _initialize_llm_with_tools(self):
         """Configura la LLM con herramientas y el template de sistema"""
-        from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-        from langchain_core.messages import SystemMessage
-        
+
         # Definir el prompt estructurado
         prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content=self._get_system_template()),
@@ -76,7 +78,7 @@ class UserGraph:
             self.create_graph()
         self.compiled_graph = self.graph.compile()
     
-    async def invoke_graph(self, user_input: str, current_state: Dict[str, Any] = None) -> Dict[str, Any]:
+    def invoke_graph(self, user_input: str, current_state: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Invoca el grafo con el input del usuario.
         
@@ -87,7 +89,7 @@ class UserGraph:
         Returns:
             Estado actualizado después de procesar el input
         """
-        if not hasattr(self, 'compiled_graph'):
+        if self.graph is None:
             self.compile_graph()
         
         current_state = current_state or self.initial_state.copy()
@@ -98,7 +100,7 @@ class UserGraph:
         self._add_to_history(user_message)
         
         # Ejecutar el grafo
-        result = await self.compiled_graph.ainvoke(
+        result = self.compiled_graph.invoke(
             current_state,
             config=RunnableConfig(configurable={"user_id": "some_user_id"})
         )
