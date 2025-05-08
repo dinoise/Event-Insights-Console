@@ -1,8 +1,6 @@
 import uuid
-import asyncio
 
 from typing import Any, Dict, Optional, List
-from aiohttp import ClientSession, TCPConnector
 from langchain.chat_models import init_chat_model
 
 from .user_graph import UserGraph
@@ -12,28 +10,8 @@ class LLMOrchestrator:
     def __init__(self, model_name: str):
         self._user_sessions: Dict[str, UserGraph] = {}
         self.model_name = model_name
-        self.connector = None
-        self.client_session = None
         print(f"Model loaded: {self.model_name}")
-    
-    async def initialize(self):
-        """Inicializa la sesión HTTP (aiohttp)"""
-        self.connector = TCPConnector(limit=100)
-
-        self.client_session = ClientSession(
-            connector=self.connector,
-            connector_owner=False,
-            headers={},
-            raise_for_status=True,
-        )
-    
-    async def close(self):
-        """Cierra la sesión HTTP"""
-        if self.client_session:
-            await self.client_session.close()
-        if self.connector:
-            await self.connector.close()
-    
+        
     def get_user_session(self, session_id: str) -> Optional[UserGraph]:
         """Obtiene la sesión de usuario existente"""
         return self._user_sessions.get(session_id)
@@ -77,7 +55,7 @@ class LLMOrchestrator:
     def _initialize_tools(self) -> list:
         """Inicializa las herramientas para el agente"""
         
-        return initialize_tools(self.client_session)
+        return initialize_tools()
     
     def get_full_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Procesa un mensaje del usuario a través del grafo"""
