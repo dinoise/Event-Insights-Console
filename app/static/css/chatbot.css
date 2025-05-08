@@ -344,3 +344,94 @@ body {
         font-size: 1.3rem;
     }
 }
+
+/* Markdown styles */
+.message-content :first-child {
+    margin-top: 0;
+}
+
+.message-content :last-child {
+    margin-bottom: 0;
+}
+
+.message-content h1, 
+.message-content h2, 
+.message-content h3, 
+.message-content h4 {
+    margin: 1em 0 0.5em 0;
+    line-height: 1.2;
+}
+
+.message-content h1 { font-size: 1.5em; }
+.message-content h2 { font-size: 1.3em; }
+.message-content h3 { font-size: 1.1em; }
+
+.message-content p {
+    margin: 0.8em 0;
+    line-height: 1.5;
+}
+
+.message-content ul, 
+.message-content ol {
+    margin: 0.8em 0;
+    padding-left: 2em;
+}
+
+.message-content li {
+    margin: 0.3em 0;
+}
+
+.message-content code {
+    background-color: rgba(0,0,0,0.05);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.message-content pre {
+    background-color: rgba(0,0,0,0.05);
+    padding: 1em;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.message-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.message-content blockquote {
+    border-left: 3px solid var(--primary-light);
+    color: var(--text-light);
+    padding-left: 1em;
+    margin: 1em 0;
+    font-style: italic;
+}
+
+.message-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.message-content a:hover {
+    text-decoration: underline;
+}
+
+.message-content table {
+    border-collapse: collapse;
+    margin: 1em 0;
+    width: 100%;
+}
+
+.message-content th, 
+.message-content td {
+    border: 1px solid #ddd;
+    padding: 0.5em;
+}
+
+.message-content th {
+    background-color: var(--primary-light);
+    color: var(--text-color);
+}

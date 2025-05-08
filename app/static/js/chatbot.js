@@ -55,7 +55,7 @@ async function submitMessage() {
     }
 }
 
-// Add message to chat UI
+// Add message to chat UI with Markdown support
 function addMessageToUI(sender, content) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender}`;
@@ -72,7 +72,15 @@ function addMessageToUI(sender, content) {
     // Message content
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.innerHTML = content;
+    
+    // Parse Markdown if message is from AI, otherwise display as-is
+    if (sender === 'ai') {
+        // Sanitize and parse Markdown
+        contentDiv.innerHTML = marked.parse(escapeHtml(content));
+    } else {
+        // For human messages, just escape HTML for security
+        contentDiv.textContent = content;
+    }
     
     // Build message
     messageDiv.appendChild(avatarDiv);
@@ -83,6 +91,16 @@ function addMessageToUI(sender, content) {
     
     // Scroll to bottom
     scrollToBottom();
+}
+
+// Helper function to escape HTML (security)
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // Show/hide loading indicator
