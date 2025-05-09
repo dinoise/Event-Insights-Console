@@ -38,13 +38,8 @@ def initialize_tools():
             func=search,
             name="buscar_datos_cliente_pedido_envio",
             description="""
-            Herramienta especializada para buscar información en la base de datos de Liverpool.
-            Debe ser el primer paso cuando se solicitan datos de clientes, pedidos o envíos.
-
-            FORMATO DE BÚSQUEDA:
-            - Para clientes: 'cliente <id_cliente>' o 'cliente <nombre/apellido>'
-            - Para pedidos: 'pedido <id_pedido>' o 'pedido cliente <id_cliente>'
-            - Para envíos: 'envío <id_envío>' o 'envío pedido <id_pedido>'
+            Herramienta especializada para buscar información en la base de datos de Liverpool
+            Solo muestra informacion sobre datos de clientes
 
             RESULTADOS:
             - Siempre devuelve los resultados en formato Markdown
@@ -52,16 +47,11 @@ def initialize_tools():
             - Incluye solo datos verificados de la base de datos
             - Si no hay resultados, devuelve "No se encontraron coincidencias"
 
-            EJEMPLOS DE USO:
-            1. Buscar cliente por ID: 'cliente 1227'
-            2. Buscar pedidos de cliente: 'pedido cliente 1832'
-            3. Buscar envío específico: 'envío ENV45678'
-
             NORMAS ESTRICTAS:
             1. Nunca inventar información
             2. Solo usar datos de la respuesta de la API
             3. Mantener el formato de tabla Markdown
-            4. Limitar resultados a 5 registros como máximo
+            4. Limitar resultados a 1 registros como máximo
             """,
             args_schema=QueryInput,
         )
