@@ -2,7 +2,7 @@ import json
 
 from typing import Annotated, TypedDict, Union, Dict, Any, List
 
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.tools import StructuredTool
@@ -33,6 +33,9 @@ class UserGraph:
         # Inicializar con el mensaje de bienvenida
         self._add_to_history(self.initial_state["messages"][0])
     
+    #######################
+    # Internal Functions  #
+    #######################
     def _get_system_template(self):
         return AssistantTemplate.get_system_prompt()
 
@@ -58,18 +61,99 @@ class UserGraph:
             "session_data": {}
         }
     
+    def _get_message_objects(self) -> List[Union[HumanMessage, AIMessage]]:
+        """Convierte el historial interno en objetos Message para LangChain"""
+        messages = []
+        for item in self.conversation_history:
+            if item["type"] == "human":
+                messages.append(HumanMessage(content=item["content"]))
+            elif item["type"] == "ai":
+                messages.append(AIMessage(content=item["content"]))
+        return messages
+    
+    def _add_to_history(self, message: Union[HumanMessage, AIMessage]):
+        """Añade un mensaje al historial de conversación"""
+        entry = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "human" if isinstance(message, HumanMessage) else "ai",
+            "content": message.content,
+            "metadata": {
+                "user_info": getattr(message, "user_info", {}),
+                "session_data": getattr(message, "session_data", {})
+            }
+        }
+        self.conversation_history.append(entry)
+
+    ###################
+    # Function nodes  #
+    ###################
+    def _chatbot_node(self, state: AgentState) -> Dict[str, Any]:
+        """Nodo principal del chatbot que usa la LLM"""
+        # print(state["messages"])
+        # print( type(state["messages"]) )
+
+        response = self.llm_with_tools.invoke(state["messages"])
+        return {"messages": [response]}
+    
+    def _should_format(state: AgentState) -> str:
+        """
+            Determina si debe ejecutarse el formateo basado en:
+            - Si el último mensaje contiene resultados de una herramienta
+        """
+        last_msg = state["messages"][-1].content
+        
+        # Verificar si el mensaje parece contener datos crudos (ajusta según tu caso)
+        is_tool_output = any(
+            indicator in last_msg.lower() 
+            for indicator in ["{", "[", "resultado", "datos", "api"]
+        )
+    
+        return "formatter" if is_tool_output else "end"
+
+    def _formatter_node(self, state: AgentState) -> Dict[str, Any]:
+        """Nodo que formatea la salida de herramientas a Markdown"""
+        last_msg = state["messages"][-1].content
+        
+        # Prompt más específico para el formateo
+        input_prompt = (
+            "Por favor, formatea los siguientes datos como un mensaje Markdown claro y organizado "
+            "para ser mostrado al cliente de Liverpool. Usa tablas o texto estructurado "
+            "según corresponda:\n\n"
+            f"Datos a formatear: {last_msg}\n\n"
+            "Instrucciones adicionales:\n"
+            "- Destaca los números de pedido/envío en **negrita**\n"
+            "- Usa listas para items múltiples\n"
+            "- Si hay fechas, usa formato DD/MM/YYYY\n"
+            "- Mantén un tono profesional pero amable"
+        )
+        
+        response = self.llm_with_tools.invoke([input_prompt])
+        return {"messages": response}
+    
+    ##################################
+    # Functions of functionalitites  #
+    ##################################
     def create_graph(self) -> None:
         """Crea el grafo con los nodos necesarios"""
+        # Creating the graph
         graph_builder = StateGraph(AgentState)
         
+        # Nodes
         graph_builder.add_node("chatbot", self._chatbot_node)
+        graph_builder.add_node("formatter", self._formatter_node)
+        
         tool_node = ToolNode(tools=self.tools)
         graph_builder.add_node("tools", tool_node)
-        
-        graph_builder.add_conditional_edges("chatbot", tools_condition)
+
+        # Edges
+        graph_builder.add_edge(START, "chatbot")
         graph_builder.add_edge("tools", "chatbot")
-        graph_builder.set_entry_point("chatbot")
+        graph_builder.add_conditional_edges("chatbot", 
+                                            tools_condition)
+        graph_builder.add_edge("chatbot", "formatter")
+        graph_builder.add_edge("formatter", END)
         
+        # Saving the graph
         self.graph = graph_builder
     
     def compile_graph(self) -> None:
@@ -113,70 +197,10 @@ class UserGraph:
         
         return result
 
-    def _get_message_objects(self) -> List[Union[HumanMessage, AIMessage]]:
-        """Convierte el historial interno en objetos Message para LangChain"""
-        messages = []
-        for item in self.conversation_history:
-            if item["type"] == "human":
-                messages.append(HumanMessage(content=item["content"]))
-            elif item["type"] == "ai":
-                messages.append(AIMessage(content=item["content"]))
-        return messages
-    
-    def _add_to_history(self, message: Union[HumanMessage, AIMessage]):
-        """Añade un mensaje al historial de conversación"""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "type": "human" if isinstance(message, HumanMessage) else "ai",
-            "content": message.content,
-            "metadata": {
-                "user_info": getattr(message, "user_info", {}),
-                "session_data": getattr(message, "session_data", {})
-            }
-        }
-        self.conversation_history.append(entry)
-    
     def get_full_history(self) -> List[Dict[str, Any]]:
         """Devuelve el historial completo de la conversación"""
         return self.conversation_history
     
     def get_last_message(self) -> Dict[str, Any]:
-        """Devuelve el historial completo de la conversación"""
+        """Devuelve el último mensaje del historial"""
         return self.conversation_history[-1]
-
-    def get_formatted_history(self) -> List[Dict[str, Any]]:
-        """Devuelve el historial en formato para la UI"""
-        return [{
-            "type": msg["type"],
-            "data": {
-                "content": msg["content"],
-                "timestamp": msg["timestamp"]
-            }
-        } for msg in self.conversation_history]
-    
-    def _chatbot_node(self, state: AgentState) -> Dict[str, Any]:
-        """Nodo principal del chatbot que usa la LLM"""
-        response = self.llm_with_tools.invoke(state["messages"])
-        return {"messages": [response]}
-    
-    def _update_user_info(self, state: AgentState) -> None:
-        """Extrae información del usuario del historial de mensajes"""
-        for msg in state["messages"]:
-            if isinstance(msg, HumanMessage):
-                content = msg.content.lower()
-                if "mi nombre es" in content:
-                    name = content.split("mi nombre es")[1].strip()
-                    state["user_info"]["name"] = name
-                elif "me llamo" in content:
-                    name = content.split("me llamo")[1].strip()
-                    state["user_info"]["name"] = name
-    
-    def save_conversation(self, file_path: str) -> None:
-        """Guarda el historial de conversación en un archivo JSON"""
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(self.conversation_history, f, ensure_ascii=False, indent=2)
-    
-    def load_conversation(self, file_path: str) -> None:
-        """Carga un historial de conversación desde un archivo JSON"""
-        with open(file_path, 'r', encoding='utf-8') as f:
-            self.conversation_history = json.load(f)

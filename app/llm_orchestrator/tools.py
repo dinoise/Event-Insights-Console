@@ -20,11 +20,8 @@ def search(query: str):
         )
         
         response.raise_for_status() 
-        print(f"response {response}")
         response_data = response.json().get("data")
         
-        print(f"response_data {response_data}")
-
         if not response_data:
             return "No se encontraron resultados para la búsqueda."
         return response_data
@@ -47,7 +44,6 @@ def initialize_tools():
             - Para envíos: 'envío <id_envío>' o 'envío pedido <id_pedido>'
 
             RESULTADOS:
-            - Siempre devuelve los resultados en formato Markdown
             - Organiza la información en tablas claras
             - Incluye solo datos verificados de la base de datos
             - Si no hay resultados, devuelve "No se encontraron coincidencias"
@@ -60,8 +56,7 @@ def initialize_tools():
             NORMAS ESTRICTAS:
             1. Nunca inventar información
             2. Solo usar datos de la respuesta de la API
-            3. Mantener el formato de tabla Markdown
-            4. Limitar resultados a 5 registros como máximo
+            3. Limitar resultados a 5 registros como máximo
             """,
             args_schema=QueryInput,
         )
