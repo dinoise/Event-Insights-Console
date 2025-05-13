@@ -5,4 +5,4 @@ bp = Blueprint('event_data', __name__, url_prefix='/api/event-data')
 
 @bp.route('/', methods=['GET'])
 def embedding_search():
-    return EventDataController.get_event_client_data()
+    return EventDataController.get_generic_event_data()

@@ -2,28 +2,28 @@ from flask import jsonify, request, current_app
 from http import HTTPStatus
 
 from services.event_data_service import EventDataService
-from utils.utils import get_secret
 
 class EventDataController:
 
     @staticmethod
-    def get_event_client_data():
-        id_cliente = request.args.get('id_cliente', default=None, type=str)
-        if not id_cliente:
+    def get_generic_event_data():
+        event_uuid = request.args.get('event_uuid', default=None, type=str)
+        target_dataset = request.args.get('target_dataset', default=None, type=str)
+        target_table = request.args.get('target_table', default=None, type=str)
+
+        if not event_uuid or not target_dataset or not target_table:
             return jsonify({
-                "message": "id_cliente is missing",
-                "data":  None
+                "message": "event_uuid, target_dataset and target_table are mandatory",
+                "data": []
             }), HTTPStatus.BAD_REQUEST
 
         project_id = current_app.config.get("PROJECT_ID")
-        dataset = get_secret( current_app.config.get("BIGQUERY_DATASET") )
-        table = get_secret( current_app.config.get("BIGQUERY_TBL_CLIENTES") )
 
         try:
             result = EventDataService.get_table_columns(project_id=project_id,
-                                            dataset=dataset,
-                                            table=table,
-                                            id_cliente=id_cliente)
+                                            dataset=target_dataset,
+                                            table=target_table,
+                                            event_uuid=event_uuid)
         except Exception as e:
             print(e)
             return str(e), 500

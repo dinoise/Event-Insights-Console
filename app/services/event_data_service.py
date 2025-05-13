@@ -8,7 +8,7 @@ class EventDataService:
         project_id: str, 
         dataset: str, 
         table: str,
-        id_cliente: str
+        event_uuid: str
     ) -> Dict[str, Any]:
         if not table:
             raise ValueError("Table name can't be empty.")
@@ -16,13 +16,13 @@ class EventDataService:
         query = f"""
             SELECT * 
             FROM `{project_id}.{dataset}.{table}` 
-            WHERE id_cliente = @id_cliente
+            WHERE uuid_evento_origen = @event_uuid
             LIMIT 1
         """
 
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ScalarQueryParameter("id_cliente", "STRING", id_cliente)
+                bigquery.ScalarQueryParameter("event_uuid", "STRING", event_uuid)
             ]
         )
 
