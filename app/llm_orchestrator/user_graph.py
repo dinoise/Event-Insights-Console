@@ -87,32 +87,46 @@ class UserGraph:
     ###################
     # Function nodes  #
     ###################
-    def _chatbot_node(self, state: AgentState) -> Dict[str, Any]:
+    def _semmantic_search_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo principal del chatbot que usa la LLM"""
-        # print(state["messages"])
-        # print( type(state["messages"]) )
+        
+        state_mgs = state["messages"]
 
-        response = self.llm_with_tools.invoke(state["messages"])
+        input_prompt = (
+            "Usa una busqueda semantica para obtener el dataset y la tabla donde están localizados los datos\n"
+            f"Mensajes: {state_mgs}"
+        )
+
+        response = self.llm_with_tools.invoke([input_prompt])
+
+        print(f"response {response}")
+
         return {"messages": [response]}
     
-    def _should_format(state: AgentState) -> str:
-        """
-            Determina si debe ejecutarse el formateo basado en:
-            - Si el último mensaje contiene resultados de una herramienta
-        """
+    def _bigquery_search_node(self, state: AgentState) -> Dict[str, Any]:
+        """Nodo que formatea la salida de herramientas a Markdown"""
         last_msg = state["messages"][-1].content
         
-        # Verificar si el mensaje parece contener datos crudos (ajusta según tu caso)
-        is_tool_output = any(
-            indicator in last_msg.lower() 
-            for indicator in ["{", "[", "resultado", "datos", "api"]
+        # Prompt más específico para el formateo
+        input_prompt = (
+            "Por favor, formatea los siguientes datos como un mensaje Markdown claro y organizado "
+            "para ser mostrado al cliente de Liverpool. Usa tablas o texto estructurado "
+            "según corresponda:\n\n"
+            f"Datos a formatear: {last_msg}\n\n"
+            "Instrucciones adicionales:\n"
+            "- Destaca los números de pedido/envío en **negrita**\n"
+            "- Usa listas para items múltiples\n"
+            "- Si hay fechas, usa formato DD/MM/YYYY\n"
+            "- Mantén un tono profesional pero amable"
         )
+        
+        response = self.llm_with_tools.invoke([input_prompt])
+        return {"messages": response}
     
-        return "formatter" if is_tool_output else "end"
-
     def _formatter_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que formatea la salida de herramientas a Markdown"""
         last_msg = state["messages"][-1].content
+        print(f"formatter {last_msg}")
         
         # Prompt más específico para el formateo
         input_prompt = (
@@ -139,19 +153,21 @@ class UserGraph:
         graph_builder = StateGraph(AgentState)
         
         # Nodes
-        graph_builder.add_node("chatbot", self._chatbot_node)
+        graph_builder.add_node("semmantic_search", self._semmantic_search_node)
+        graph_builder.add_node("bigquery_search", self._bigquery_search_node)
         graph_builder.add_node("formatter", self._formatter_node)
         
+        # Tool node
         tool_node = ToolNode(tools=self.tools)
         graph_builder.add_node("tools", tool_node)
 
         # Edges
-        graph_builder.add_edge(START, "chatbot")
-        graph_builder.add_edge("tools", "chatbot")
-        graph_builder.add_conditional_edges("chatbot", 
+        graph_builder.add_edge(START, "semmantic_search")
+        graph_builder.add_edge("tools", "semmantic_search")
+        graph_builder.add_conditional_edges("semmantic_search", 
                                             tools_condition)
-        graph_builder.add_edge("chatbot", "formatter")
-        graph_builder.add_edge("formatter", END)
+        # graph_builder.add_edge("semmantic_search", "formatter")
+        graph_builder.add_edge("semmantic_search", END)
         
         # Saving the graph
         self.graph = graph_builder
