@@ -4,7 +4,6 @@ from typing import Annotated, TypedDict, Union, Dict, Any, List
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.tools import StructuredTool
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
 from langchain_core.language_models import BaseChatModel
@@ -304,6 +303,9 @@ class UserGraph:
         
         return "end"
 
+    #####################
+    # Class Functions #
+    #####################
     def create_graph(self) -> None:
         """Grafo optimizado con flujo claro"""
         graph_builder = StateGraph(AgentState)
@@ -316,8 +318,8 @@ class UserGraph:
         graph_builder.add_node("format_response", self._formatter_node)
         graph_builder.add_node("generic_response", self._generic_response_node)
 
-        graph_builder.set_entry_point("classifier")
-
+        # Edges
+        graph_builder.add_edge(START, "classifier")
         graph_builder.add_conditional_edges(
             "classifier",
             self._evaluate_decision_edge,
@@ -327,14 +329,12 @@ class UserGraph:
                 "end": END
             }
         )
-
         graph_builder.add_conditional_edges("semantic_search", 
                                             self._should_continue_edge,
                                             {
                                                 "continue": "data_retrieval",
                                                 "end": "generic_response"
                                             })
-
         graph_builder.add_edge("semantic_search", "data_retrieval")
         graph_builder.add_edge("data_retrieval", "format_response")
         graph_builder.add_edge("format_response", END)
