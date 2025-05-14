@@ -6,7 +6,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.tools import StructuredTool
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.runnables import RunnableConfig
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -14,6 +14,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from datetime import datetime
 
 from .assistant_template import AssistantTemplate
+
+from llm_orchestrator.tools import semantic_search, generic_data_retrieval
 
 class AgentState(TypedDict):
     messages: Annotated[List[Union[HumanMessage, AIMessage]], add_messages]
@@ -87,42 +89,135 @@ class UserGraph:
     ###################
     # Function nodes  #
     ###################
-    def _semmantic_search_node(self, state: AgentState) -> Dict[str, Any]:
-        """Nodo principal del chatbot que usa la LLM"""
-        
-        state_mgs = state["messages"]
-
-        input_prompt = (
-            "Usa una busqueda semantica para obtener el dataset y la tabla donde están localizados los datos\n"
-            f"Mensajes: {state_mgs}"
+    def _semantic_search_node(self, state: AgentState) -> Dict[str, Any]:
+        """Nodo optimizado para búsqueda semántica con una sola herramienta"""
+        # 1. Obtener el mensaje del usuario
+        user_query = next(
+            (msg.content for msg in reversed(state["messages"]) 
+            if isinstance(msg, HumanMessage)),
+            ""
         )
-
-        response = self.llm_with_tools.invoke([input_prompt])
-
-        print(f"response {response}")
-
-        return {"messages": [response]}
+        
+        # 2. Seleccionar solo la herramienta que necesitas
+        semantic_search_tool = next(
+            (tool for tool in self.tools if tool.name == "localizar_datos_cliente"), 
+            None
+        )
+        
+        if not semantic_search_tool:
+            raise ValueError("La herramienta 'localizar_datos_cliente' no está disponible")
+        
+        # 3. Configurar el LLM con solo esta herramienta
+        llm_with_single_tool = self.llm.bind_tools([semantic_search_tool])
+        
+        # 4. Crear el prompt específico
+        prompt = (
+            "Realiza una búsqueda semántica para localizar dónde están almacenados los datos. "
+            "Usa EXCLUSIVAMENTE la herramienta 'localizar_datos_cliente' con los siguientes parámetros:\n"
+            f"Consulta del usuario: '{user_query}'\n\n"
+            "Instrucciones:\n"
+            "1. Usa SOLO la herramienta proporcionada\n"
+            "2. Devuelve únicamente el JSON con la estructura requerida:\n"
+            "- event_uuid\n"
+            "- target_dataset\n"
+            "- target_table"
+        )
+        
+        # 5. Invocar el LLM
+        response = llm_with_single_tool.invoke([HumanMessage(content=prompt)])
+        
+        print(f"\nResponse semantic search: {response}\n")
+        
+        # 6. Verificar si se llamó a la herramienta
+        if response.tool_calls:
+            # Si se llamó a la herramienta, ejecutarla
+            tool_call = response.tool_calls[0]
+            tool_output = semantic_search_tool.invoke(tool_call["args"])
+            
+            return {
+                "messages": [
+                    AIMessage(
+                        content="",
+                        tool_calls=[tool_call],
+                    ),
+                    ToolMessage(
+                        content=json.dumps(tool_output),
+                        tool_call_id=tool_call["id"],
+                    )
+                ]
+            }
+        else:
+            # Si no se llamó a la herramienta, devolver la respuesta directa
+            return {"messages": [response]}
     
+
     def _bigquery_search_node(self, state: AgentState) -> Dict[str, Any]:
-        """Nodo que formatea la salida de herramientas a Markdown"""
-        last_msg = state["messages"][-1].content
-        
-        # Prompt más específico para el formateo
-        input_prompt = (
-            "Por favor, formatea los siguientes datos como un mensaje Markdown claro y organizado "
-            "para ser mostrado al cliente de Liverpool. Usa tablas o texto estructurado "
-            "según corresponda:\n\n"
-            f"Datos a formatear: {last_msg}\n\n"
-            "Instrucciones adicionales:\n"
-            "- Destaca los números de pedido/envío en **negrita**\n"
-            "- Usa listas para items múltiples\n"
-            "- Si hay fechas, usa formato DD/MM/YYYY\n"
-            "- Mantén un tono profesional pero amable"
-        )
-        
-        response = self.llm_with_tools.invoke([input_prompt])
-        return {"messages": response}
-    
+        """Nodo optimizado para consulta de datos con la herramienta específica"""
+        try:
+            # 1. Obtener el último mensaje
+            last_msg = state["messages"][-1].content
+            print(f"\nlast_msg: {last_msg}\n")
+            
+            # 2. Obtener la herramienta específica
+            consultar_tool = next(
+                tool for tool in self.tools 
+                if tool.name == "consultar_sistema_liverpool"
+            )
+            
+            # 3. Configurar LLM con solo esta herramienta y forzar su uso
+            llm_with_tool = self.llm.bind_tools(
+                [consultar_tool],
+                tool_choice={
+                    "type": "function", 
+                    "function": {"name": "consultar_sistema_liverpool"}
+                }
+            )
+            
+            # 4. Crear prompt específico
+            prompt = (
+                f"Consulta información en los sistemas de Liverpool usando EXCLUSIVAMENTE "
+                f"la herramienta 'consultar_sistema_liverpool' con estos parámetros:\n"
+                f"{last_msg}\n\n"
+                "Requisitos:\n"
+                "- Usa EXACTAMENTE los metadatos proporcionados\n"
+                "- Devuelve los datos completos en formato JSON\n"
+                "- No uses ninguna otra herramienta o función"
+            )
+            
+            print(f"\nprompt bigquery: {prompt}\n")
+            
+            # 5. Invocar el LLM
+            response = llm_with_tool.invoke([HumanMessage(content=prompt)])
+            
+            print(f"\nresponse bigquery: {response}\n")
+            
+            # 6. Verificar y ejecutar la herramienta
+            if not response.tool_calls:
+                raise ValueError("El LLM no llamó a la herramienta como se esperaba")
+            
+            tool_call = response.tool_calls[0]
+            tool_output = consultar_tool.invoke(tool_call["args"])
+            
+            # 7. Retornar la estructura adecuada de mensajes
+            return {
+                "messages": [
+                    AIMessage(content="", tool_calls=[tool_call]),
+                    ToolMessage(
+                        content=json.dumps(tool_output),
+                        tool_call_id=tool_call["id"],
+                        name=tool_call["name"]
+                    )
+                ]
+            }
+            
+        except Exception as e:
+            print(f"\nError en bigquery_search_node: {str(e)}\n")
+            return {
+                "messages": [
+                    AIMessage(content=f"Error al consultar el sistema: {str(e)}")
+                ]
+            }
+         
     def _formatter_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que formatea la salida de herramientas a Markdown"""
         last_msg = state["messages"][-1].content
@@ -141,42 +236,43 @@ class UserGraph:
             "- Mantén un tono profesional pero amable"
         )
         
-        response = self.llm_with_tools.invoke([input_prompt])
+        response = self.llm.invoke([input_prompt])
         return {"messages": response}
     
-    ##################################
-    # Functions of functionalitites  #
-    ##################################
     def create_graph(self) -> None:
-        """Crea el grafo con los nodos necesarios"""
-        # Creating the graph
+        """Grafo optimizado con flujo claro"""
         graph_builder = StateGraph(AgentState)
         
-        # Nodes
-        graph_builder.add_node("semmantic_search", self._semmantic_search_node)
-        graph_builder.add_node("bigquery_search", self._bigquery_search_node)
-        graph_builder.add_node("formatter", self._formatter_node)
-        
-        # Tool node
-        tool_node = ToolNode(tools=self.tools)
-        graph_builder.add_node("tools", tool_node)
+        # Nodos
+        graph_builder.add_node("semantic_search", self._semantic_search_node)
+        graph_builder.add_node("data_retrieval", self._bigquery_search_node)
+        graph_builder.add_node("format_response", self._formatter_node)
+        graph_builder.add_node("tools", ToolNode(tools=self.tools))
 
-        # Edges
-        graph_builder.add_edge(START, "semmantic_search")
-        graph_builder.add_edge("tools", "semmantic_search")
-        graph_builder.add_conditional_edges("semmantic_search", 
-                                            tools_condition)
-        # graph_builder.add_edge("semmantic_search", "formatter")
-        graph_builder.add_edge("semmantic_search", END)
+        # Conexiones principales
+        graph_builder.set_entry_point("semantic_search")
         
-        # Saving the graph
+        # graph_builder.add_edge("tools", "semantic_search")
+        # graph_builder.add_conditional_edges("semantic_search", tools_condition)
+
+        # graph_builder.add_edge("tools", "data_retrieval")
+        # graph_builder.add_conditional_edges("data_retrieval", tools_condition)
+
+        graph_builder.add_edge("semantic_search", "data_retrieval")
+
+        graph_builder.add_edge("data_retrieval", "format_response")
+
+        graph_builder.add_edge("format_response", END)
+                
         self.graph = graph_builder
-    
+
     def compile_graph(self) -> None:
         """Compila el grafo para su ejecución"""
         if self.graph is None:
             self.create_graph()
         self.compiled_graph = self.graph.compile()
+
+        print(self.compiled_graph.get_graph().draw_mermaid())
     
     def invoke_graph(self, user_input: str) -> Dict[str, Any]:
         """

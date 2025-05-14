@@ -7,4 +7,4 @@ class EventEmbeddingSchema(SQLAlchemyAutoSchema):
 
     class Meta:
         model = EventEmbedding
-        exclude = ('embedding_embedded_message', 'embedding_event_message')  # exclude this field
+        exclude = ('embedding_embedded_message', 'embedding_event_message', 'embedding_timestamp')  # exclude this field

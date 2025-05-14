@@ -32,6 +32,7 @@ class SemanticSearchInput(BaseModel):
 
 def semantic_search(query: str, top_k: int = 1) -> dict:
     try:
+        print("lololol")
         response = requests.get(
             url=f"{BASE_URL}/api/embeddings",
             params={
@@ -47,7 +48,7 @@ def semantic_search(query: str, top_k: int = 1) -> dict:
         print(f"data {data}")
         print(f" ")
                     
-        return data
+        return data.get("data", {})
         
     except requests.exceptions.RequestException as e:
         return {
@@ -59,51 +60,59 @@ def semantic_search(query: str, top_k: int = 1) -> dict:
 ######################
 # Search in Bigquery  #
 ######################
-class ClienteInput(BaseModel):
-    id_cliente: str = Field(
+class GenericQueryInput(BaseModel):
+    event_uuid: str = Field(
         ...,
-        description="ID único del cliente en formato Liverpool (ej. 1999 o 2001)"
+        description="UUID único del registro a consultar (obtenido de búsqueda semántica)",
+        min_length=36,
+        max_length=36
     )
-    
-def get_cliente_data(id_cliente: str):
-    """
-    Obtiene datos completos de un cliente, sus pedidos y envíos desde el sistema de Liverpool.
-    
-    Args:
-        id_cliente: ID del cliente en formato LIV-XXXXXXX o CLI-XXXXXXX
+    target_dataset: str = Field(
+        ...,
+        description="Nombre del dataset donde se encuentran los datos",
+        examples=["ds_silver_delivernow", "ds_gold_customers"]
+    )
+    target_table: str = Field(
+        ...,
+        description="Nombre de la tabla específica con los datos",
+        examples=["tb_lvp_clientes_v1", "tb_pedidos_activos"]
+    )
+
+def generic_data_retrieval(
+    event_uuid: str,
+    target_dataset: str,
+    target_table: str
+) -> dict:
+    try:
+        # Validación básica
+        if not all([event_uuid, target_dataset, target_table]):
+            return {
+                "status": "error",
+                "error": "Faltan parámetros requeridos"
+            }
         
-    Returns:
-        Dict con estructura {
-            "cliente": {datos_personales}, 
+        # Construir payload para la API
+        payload = {
+            "event_uuid": event_uuid,
+            "target_dataset": target_dataset,
+            "target_table": target_table
         }
-        o mensaje de error descriptivo
-    """
-    try:        
+        
         response = requests.get(
             url=f"{BASE_URL}/api/event-data",
-            params={
-                "id_cliente": id_cliente
-            },
-            headers={
-                "Content-Type": "application/json"
-            },
-            timeout=15
+            params=payload,
+            timeout=10
         )
-        
         response.raise_for_status()
+        
         data = response.json()
         
-        if not data.get('data'):
-            return "No se encontró el cliente en el sistema."
-        
         return data
-        
-    except requests.exceptions.Timeout:
-        return "Error: Tiempo de espera agotado al consultar el servicio"
     except requests.exceptions.RequestException as e:
-        return f"Error de conexión: {str(e)}"
-    except json.JSONDecodeError:
-        return "Error: Respuesta inválida del servidor"
+        return {
+            "status": "error",
+            "error": f"Error en la consulta: {str(e)}"
+        }
 
 def initialize_tools():
     return [
@@ -168,34 +177,46 @@ def initialize_tools():
         ),
 
         StructuredTool.from_function(
-            func=get_cliente_data,
-            name="consultar_sistema_clientes",
+            func=generic_data_retrieval,
+            name="consultar_sistema_liverpool",
             description="""
-            HERRAMIENTA ESPECIALIZADA DEL SISTEMA LIVERPOOL - MÓDULO DE CLIENTES
+            SISTEMA UNIFICADO DE CONSULTAS - LIVERPOOL DATA HUB
 
             Propósito:
-            Consulta información completa de clientes registrados en Liverpool, incluyendo:
-            - Datos personales del cliente
-            - Historial de pedidos recientes (máximo 1)
-            - Estado de envíos asociados
+            Consulta información detallada en los sistemas de Liverpool usando metadatos
+            obtenidos previamente por búsqueda semántica.
 
-            Formato de Entrada:
-            - ID de cliente de 4 digitos de largo o más
-            - Ejemplo válido: 1999
+            Datos que puede consultar:
+            - Información completa de clientes
+            - Detalles de pedidos específicos
+            - Estados y rutas de envíos
 
-            Comportamiento:
-            1. Verifica automáticamente el formato del ID
-            2. Consulta la base de datos central de Liverpool
-            3. Devuelve datos estructurados en formato JSON
+            Requisitos de Entrada:
+            1. event_uuid: Identificador único del registro (36 caracteres)
+            2. target_dataset: Nombre del dataset (ej. ds_silver_delivernow)
+            3. target_table: Nombre de la tabla (ej. tb_lvp_clientes_v1)
 
             Reglas Estrictas:
-            Solo consultar con IDs válidos
-            Nunca mostrar más de 1 pedido
+            1. Siempre validar que los metadatos provengan de búsqueda semántica
+            2. Limitar consultas a 1 registro por vez
+            3. Nunca exponer campos sensibles (ej. contraseñas, datos bancarios)
+            4. Mantener estructura de respuesta estándar
 
-            Ejemplo de Uso:
-            Action: consultar_sistema_clientes
-            Action Input: {"id_cliente": "2001"}
+            Ejemplos Válidos:
+            Action: consultar_sistema_liverpool
+            Action Input: {
+                "event_uuid": "e6eee544-3f68-4172-aa2e-c8a5d8e2a7f9",
+                "target_dataset": "ds_silver_delivernow",
+                "target_table": "tb_lvp_clientes_v1"
+            }
+            ---
+            Action: consultar_sistema_liverpool
+            Action Input: {
+                "event_uuid": "a1b2c3d4-5678-90ef-1234-567890abcdef",
+                "target_dataset": "ds_gold_orders",
+                "target_table": "tb_pedidos_2024"
+            }
             """,
-            args_schema=ClienteInput,
+            args_schema=GenericQueryInput,
         )
     ]
