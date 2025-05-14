@@ -90,9 +90,21 @@ class UserGraph:
     ###################
     def _semantic_search_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo optimizado para búsqueda semántica con una sola herramienta"""
-        print("_semantic_search_node")
         user_query = state["messages"][-1].content
-                
+
+        consultar_tool = next(
+            tool for tool in self.tools 
+            if tool.name == "localizar_datos_cliente"
+        ) 
+        
+        llm_with_tool = self.llm.bind_tools(
+                self.tools,
+                tool_choice={
+                    "type": "function", 
+                    "function": {"name": "localizar_datos_cliente"}
+                }
+            )
+        
         prompt = (
             "Realiza una búsqueda semántica para localizar dónde están almacenados los datos. "
             "Usa EXCLUSIVAMENTE la herramienta 'localizar_datos_cliente' con los siguientes parámetros:\n"
@@ -105,77 +117,73 @@ class UserGraph:
             "- target_table"
         )
         
-        response = self.llm_with_tools.invoke([HumanMessage(content=prompt)])
-                
-        return {"messages": [response]}
+        response = llm_with_tool.invoke([HumanMessage(content=prompt)])
+                    
+        if not response.tool_calls:
+            raise ValueError("El LLM no llamó a la herramienta como se esperaba")
+        
+        tool_call = response.tool_calls[0]
+        tool_output = consultar_tool.invoke(tool_call["args"])
+        
+        return {
+            "messages": [
+                AIMessage(content="", tool_calls=[tool_call]),
+                ToolMessage(
+                    content=dumps(tool_output),
+                    tool_call_id=tool_call["id"],
+                    name=tool_call["name"]
+                )
+            ]
+        }
 
     def _bigquery_search_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo optimizado para consulta de datos con la herramienta específica"""
-        print("_bigquery_search_node")
-        try:
-            # 1. Obtener el último mensaje
-            last_msg = state["messages"][-1].content
-            
-            # 2. Obtener la herramienta específica
-            consultar_tool = next(
-                tool for tool in self.tools 
-                if tool.name == "consultar_sistema_liverpool"
-            )
-            
-            # 3. Configurar LLM con solo esta herramienta y forzar su uso
-            llm_with_tool = self.llm.bind_tools(
-                self.tools,
-                tool_choice={
-                    "type": "function", 
-                    "function": {"name": "consultar_sistema_liverpool"}
-                }
-            )
-            
-            # 4. Crear prompt específico
-            prompt = (
-                f"Consulta información en los sistemas de Liverpool usando EXCLUSIVAMENTE "
-                f"la herramienta 'consultar_sistema_liverpool' con estos parámetros:\n"
-                f"{last_msg}\n\n"
-                "Requisitos:\n"
-                "- Usa EXACTAMENTE los metadatos proporcionados\n"
-                "- Devuelve los datos completos en formato JSON\n"
-                "- No uses ninguna otra herramienta o función"
-            )
-                        
-            # 5. Invocar el LLM
-            response = llm_with_tool.invoke([HumanMessage(content=prompt)])
-                        
-            # 6. Verificar y ejecutar la herramienta
-            if not response.tool_calls:
-                raise ValueError("El LLM no llamó a la herramienta como se esperaba")
-            
-            tool_call = response.tool_calls[0]
-            tool_output = consultar_tool.invoke(tool_call["args"])
-            
-            # 7. Retornar la estructura adecuada de mensajes
-            return {
-                "messages": [
-                    AIMessage(content="", tool_calls=[tool_call]),
-                    ToolMessage(
-                        content=dumps(tool_output),
-                        tool_call_id=tool_call["id"],
-                        name=tool_call["name"]
-                    )
-                ]
+        last_msg = state["messages"][-1].content
+        
+        consultar_tool = next(
+            tool for tool in self.tools 
+            if tool.name == "consultar_sistema_liverpool"
+        )
+        
+        llm_with_tool = self.llm.bind_tools(
+            self.tools,
+            tool_choice={
+                "type": "function", 
+                "function": {"name": "consultar_sistema_liverpool"}
             }
-            
-        except Exception as e:
-            print(f"\nError en bigquery_search_node: {str(e)}\n")
-            return {
-                "messages": [
-                    AIMessage(content=f"Error al consultar el sistema: {str(e)}")
-                ]
-            }
+        )
+        
+        prompt = (
+            f"Consulta información en los sistemas de Liverpool usando EXCLUSIVAMENTE "
+            f"la herramienta 'consultar_sistema_liverpool' con estos parámetros:\n"
+            f"{last_msg}\n\n"
+            "Requisitos:\n"
+            "- Usa EXACTAMENTE los metadatos proporcionados\n"
+            "- Devuelve los datos completos en formato JSON\n"
+            "- No uses ninguna otra herramienta o función"
+        )
+                    
+        response = llm_with_tool.invoke([HumanMessage(content=prompt)])
+                    
+        if not response.tool_calls:
+            raise ValueError("El LLM no llamó a la herramienta como se esperaba")
+        
+        tool_call = response.tool_calls[0]
+        tool_output = consultar_tool.invoke(tool_call["args"])
+        
+        return {
+            "messages": [
+                AIMessage(content="", tool_calls=[tool_call]),
+                ToolMessage(
+                    content=dumps(tool_output),
+                    tool_call_id=tool_call["id"],
+                    name=tool_call["name"]
+                )
+            ]
+        }
          
     def _formatter_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que formatea la salida de herramientas a Markdown"""
-        print("_formatter_node")
-
         last_msg = state["messages"][-1].content
         
         # Prompt más específico para el formateo
@@ -196,8 +204,6 @@ class UserGraph:
     
     def _generic_response_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que genera respuestas amigables cuando no hay datos"""
-        print("_generic_response_node - Generando respuesta alternativa")
-        
         # Obtener el contexto de la conversación
         conversation_context = "\n".join(
             msg.content for msg in state["messages"] 
@@ -224,13 +230,9 @@ class UserGraph:
         return {"messages": [response]}
     
     def _classifier_node(self, state: AgentState) -> Dict[str, Any]:
-        """Nodo que genera respuestas amigables cuando no hay datos"""
-        print("_generic_response_node - Generando respuesta alternativa")
-        
-        # Obtener el contexto de la conversación
+        """Nodo que genera respuestas amigables cuando no hay datos"""        
         user_message = state["messages"][-1].content
 
-        # Prompt especializado para respuestas genéricas
         prompt = (
             "1. REQUIERE_BUSQUEDA: Solo si:\n"
             "   - Contiene datos específicos como: IDs, números de pedido/envío, emails completos, nombres completos\n"
@@ -261,9 +263,6 @@ class UserGraph:
         
         result = loads(response.content)
 
-        print(result)
-        print( type(result) )
-
         return {"decision": result}
     
     #####################
@@ -271,36 +270,25 @@ class UserGraph:
     #####################
     def _should_continue_edge(self, state: AgentState) -> str:
         """Determina si el flujo debe continuar o mostrar respuesta genérica"""
-        print("_should_continue - Evaluando estado actual")
-        
         last_msg = state["messages"][-1].content
 
-        # Caso 1: Mensaje indica error explícito
         if "Lo siento" in last_msg.lower() or "no se encontraron" in last_msg.lower():
-            print("Redirigiendo a respuesta genérica por mensaje de error")
             return "end"
 
-        # Caso 2: Intenta parsear JSON para metadatos
         try:
             json_data = loads(last_msg)
             required_keys = {"event_uuid", "target_dataset", "target_table"}
             
             if all(key in json_data for key in required_keys):
-                print("Continuando con data_retrieval - Metadatos válidos encontrados")
                 return "continue"
                 
         except Exception:
-            print("Redirigiendo a END - No es un JSON")
             return "end"
         
-        # Caso por defecto
-        print("Redirigiendo a respuesta genérica - No se cumplieron condiciones para continuar")
         return "end"
     
     def _evaluate_decision_edge(self, state: AgentState) -> str:
-        """Determina si el flujo debe continuar o mostrar respuesta genérica"""
-        print("_evaluate_decision_edge - Evaluando decision")
-        
+        """Determina si el flujo debe continuar o mostrar respuesta genérica"""        
         state_decision = state["decision"]
 
         decision = state_decision.get("decision", None)    
@@ -327,7 +315,6 @@ class UserGraph:
         graph_builder.add_node("data_retrieval", self._bigquery_search_node)
         graph_builder.add_node("format_response", self._formatter_node)
         graph_builder.add_node("generic_response", self._generic_response_node)
-        graph_builder.add_node("tools", ToolNode(tools=self.tools))
 
         graph_builder.set_entry_point("classifier")
 
@@ -340,9 +327,6 @@ class UserGraph:
                 "end": END
             }
         )
-
-        graph_builder.add_conditional_edges("semantic_search", tools_condition)
-        graph_builder.add_edge("tools", "semantic_search")
 
         graph_builder.add_conditional_edges("semantic_search", 
                                             self._should_continue_edge,
@@ -362,8 +346,6 @@ class UserGraph:
         if self.graph is None:
             self.create_graph()
         self.compiled_graph = self.graph.compile()
-
-        print(self.compiled_graph.get_graph().draw_mermaid())
     
     def invoke_graph(self, user_input: str) -> Dict[str, Any]:
         """

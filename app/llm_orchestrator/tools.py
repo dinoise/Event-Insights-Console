@@ -32,7 +32,6 @@ class SemanticSearchInput(BaseModel):
 
 def semantic_search(query: str, top_k: int = 1) -> dict:
     try:
-        print("lololol")
         response = requests.get(
             url=f"{BASE_URL}/api/embeddings",
             params={
@@ -44,9 +43,6 @@ def semantic_search(query: str, top_k: int = 1) -> dict:
         response.raise_for_status()
         
         data = response.json()
-
-        print(f"data {data}")
-        print(f" ")
                     
         return data.get("data", {})
         
