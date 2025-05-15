@@ -1,5 +1,4 @@
 import requests
-import json
 
 from os import getenv
 from pydantic import BaseModel, Field
@@ -42,9 +41,13 @@ def semantic_search(query: str, top_k: int = 1) -> dict:
         )
         response.raise_for_status()
         
-        data = response.json()
-                    
-        return data.get("data", {})
+        response_json = response.json()
+
+        data = response_json.get("data", {})
+        
+        data["query"] = query
+
+        return data
         
     except requests.exceptions.RequestException as e:
         return {
@@ -133,7 +136,9 @@ def initialize_tools():
                 {
                     "event_uuid": "cc733d33-5d67-4a46-8b84...",
                     "target_dataset": "nombre_dataset",
-                    "target_table": "nombre_tabla"
+                    "target_table": "nombre_tabla",
+                    "embedding_event_message": "id_cliente: 1901 cliente_nombres: Mario ...",
+                    "query": "id cliente 1901"
                 }
 
             Ejemplos:
@@ -142,7 +147,9 @@ def initialize_tools():
             Action Output: {
                                 "event_uuid": "cc733d33-5d67-4a46-8b84...",
                                 "target_dataset": "nombre_dataset",
-                                "target_table": "nombre_tabla"
+                                "target_table": "nombre_tabla",
+                                "embedding_event_message": "id_cliente: 1999 cliente_nombres: Mario ...",
+                                "query": "id cliente 1999"
                             }
             ---
             Action: localizar_datos_cliente
@@ -150,7 +157,9 @@ def initialize_tools():
             Action Output: {
                                 "event_uuid": "cc733d33-5d67-4a46-8b84...",
                                 "target_dataset": "nombre_dataset",
-                                "target_table": "nombre_tabla"
+                                "target_table": "nombre_tabla",
+                                "embedding_event_message": "id_cliente: 1901 cliente_nombres: Mario ...",
+                                "query": "email juan.perez@email.com"
                             }
             ---
             Action: localizar_datos_cliente
@@ -158,7 +167,9 @@ def initialize_tools():
             Action Output: {
                                 "event_uuid": "cc733d33-5d67-4a46-8b84...",
                                 "target_dataset": "nombre_dataset",
-                                "target_table": "nombre_tabla"
+                                "target_table": "nombre_tabla",
+                                "embedding_event_message": "id_cliente: 1901 cliente_nombres: Mario ...",
+                                "query": "celular 5544332211"
                             }
             ---
             Action: localizar_datos_cliente
@@ -166,7 +177,9 @@ def initialize_tools():
             Action Output: {
                                 "event_uuid": "cc733d33-5d67-4a46-8b84...",
                                 "target_dataset": "nombre_dataset",
-                                "target_table": "nombre_tabla"
+                                "target_table": "nombre_tabla",
+                                "embedding_event_message": "id_cliente: 1901 cliente_nombres: Luis ...",
+                                "query": "nombre Luis Hernandez"
                             }
             """,
             args_schema=SemanticSearchInput,

@@ -108,10 +108,12 @@ class UserGraph:
             f"Consulta del usuario: '{user_query}'\n\n"
             "Instrucciones:\n"
             "1. Usa SOLO la herramienta proporcionada\n"
-            "2. Devuelve únicamente el JSON con la estructura requerida:\n"
+            "2.- A la estructura JSON agregale la query de busqueda que utilizaste para la busqueda semantica en un nodo del JSON llamado 'query'"
+            "3. Devuelve únicamente el JSON con la estructura requerida:\n" \
             "- event_uuid\n"
             "- target_dataset\n"
-            "- target_table"
+            "- target_table\n"
+            "- query"
         )
         
         response = llm_with_tool.invoke([HumanMessage(content=prompt)])
@@ -272,15 +274,16 @@ class UserGraph:
 
         try:
             json_data = loads(last_msg)
-            required_keys = {"event_uuid", "target_dataset", "target_table"}
-            
-            if all(key in json_data for key in required_keys):
-                return "continue"
-                
+            required_keys = {"event_uuid", "target_dataset", "target_table", "query", "embedding_event_message"}
+
+            if not all(key in json_data for key in required_keys) or not json_data.get("query"):
+                return "end"
+
+            key_word = json_data["query"].split(" ")[-1]
         except Exception:
             return "end"
         
-        return "end"
+        return "continue" if key_word in json_data["embedding_event_message"] else "end"
     
     def _evaluate_decision_edge(self, state: AgentState) -> str:
         """Determina si el flujo debe continuar o mostrar respuesta genérica"""        
@@ -341,6 +344,7 @@ class UserGraph:
         if self.graph is None:
             self.create_graph()
         self.compiled_graph = self.graph.compile()
+        # print(self.compiled_graph.get_graph().draw_mermaid())
     
     def invoke_graph(self, user_input: str) -> Dict[str, Any]:
         """
