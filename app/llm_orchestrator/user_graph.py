@@ -216,8 +216,6 @@ class UserGraph:
                 "Por favor genera una respuesta adecuada que incluya:\n"
                 "- Disculpas por no encontrar la información\n"
                 "- Sugerencia de verificar los datos proporcionados\n"
-                "- Opción de contactar al servicio al cliente\n"
-                "- Posibles alternativas relacionadas"
             )
         
         response = self.llm.invoke(prompt)
