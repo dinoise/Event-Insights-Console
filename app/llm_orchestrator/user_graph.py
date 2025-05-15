@@ -331,7 +331,6 @@ class UserGraph:
                                                 "continue": "data_retrieval",
                                                 "end": "generic_response"
                                             })
-        graph_builder.add_edge("semantic_search", "data_retrieval")
         graph_builder.add_edge("data_retrieval", "format_response")
         graph_builder.add_edge("format_response", END)
 
