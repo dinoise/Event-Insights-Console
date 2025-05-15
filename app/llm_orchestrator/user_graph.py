@@ -15,6 +15,8 @@ from .assistant_template import AssistantTemplate
 class AgentState(TypedDict):
     messages: Annotated[List[Union[HumanMessage, AIMessage]], add_messages]
     decision: Dict[str, str]
+    semantic_search_result: str | Dict[str, str]
+    data_retrived: Dict[str, str]
     user_info: Dict[str, Any]
     session_data: Dict[str, Any]
 
@@ -124,20 +126,11 @@ class UserGraph:
         tool_call = response.tool_calls[0]
         tool_output = consultar_tool.invoke(tool_call["args"])
         
-        return {
-            "messages": [
-                AIMessage(content="", tool_calls=[tool_call]),
-                ToolMessage(
-                    content=dumps(tool_output),
-                    tool_call_id=tool_call["id"],
-                    name=tool_call["name"]
-                )
-            ]
-        }
+        return { "semantic_search_result": tool_output }
 
     def _bigquery_search_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo optimizado para consulta de datos con la herramienta específica"""
-        last_msg = state["messages"][-1].content
+        semantic_search_result = state["semantic_search_result"]
         
         consultar_tool = next(
             tool for tool in self.tools 
@@ -155,7 +148,7 @@ class UserGraph:
         prompt = (
             f"Consulta información en los sistemas de Liverpool usando EXCLUSIVAMENTE "
             f"la herramienta 'consultar_sistema_liverpool' con estos parámetros:\n"
-            f"{last_msg}\n\n"
+            f"{semantic_search_result}\n\n"
             "Requisitos:\n"
             "- Usa EXACTAMENTE los metadatos proporcionados\n"
             "- Devuelve los datos completos en formato JSON\n"
@@ -171,26 +164,19 @@ class UserGraph:
         tool_output = consultar_tool.invoke(tool_call["args"])
         
         return {
-            "messages": [
-                AIMessage(content="", tool_calls=[tool_call]),
-                ToolMessage(
-                    content=dumps(tool_output),
-                    tool_call_id=tool_call["id"],
-                    name=tool_call["name"]
-                )
-            ]
+            "data_retrived": tool_output
         }
          
     def _formatter_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que formatea la salida de herramientas a Markdown"""
-        last_msg = state["messages"][-1].content
+        data_retrived = state["data_retrived"]
         
         # Prompt más específico para el formateo
         input_prompt = (
             "Por favor, formatea los siguientes datos como un mensaje Markdown claro y organizado "
             "para ser mostrado al cliente de Liverpool. Usa tablas o texto estructurado "
             "según corresponda:\n\n"
-            f"Datos a formatear: {last_msg}\n\n"
+            f"Datos a formatear: {data_retrived}\n\n"
             "Instrucciones adicionales:\n"
             "- Destaca los números de pedido/envío en **negrita**\n"
             "- Usa listas para items múltiples\n"
@@ -267,23 +253,29 @@ class UserGraph:
     #####################
     def _should_continue_edge(self, state: AgentState) -> str:
         """Determina si el flujo debe continuar o mostrar respuesta genérica"""
-        last_msg = state["messages"][-1].content
+        semantic_search_result = state["semantic_search_result"]
 
-        if "Lo siento" in last_msg.lower() or "no se encontraron" in last_msg.lower():
+        if (
+            isinstance(semantic_search_result, str)
+            and (
+                "lo siento" in semantic_search_result.lower()
+                or "no se encontraron" in semantic_search_result.lower()
+            )
+        ):
             return "end"
 
+
         try:
-            json_data = loads(last_msg)
             required_keys = {"event_uuid", "target_dataset", "target_table", "query", "embedding_event_message"}
 
-            if not all(key in json_data for key in required_keys) or not json_data.get("query"):
+            if not all(key in semantic_search_result for key in required_keys) or not semantic_search_result.get("query"):
                 return "end"
 
-            key_word = json_data["query"].split(" ")[-1]
+            key_word = semantic_search_result["query"].split(" ")[-1]
         except Exception:
             return "end"
         
-        return "continue" if key_word in json_data["embedding_event_message"] else "end"
+        return "continue" if key_word in semantic_search_result["embedding_event_message"] else "end"
     
     def _evaluate_decision_edge(self, state: AgentState) -> str:
         """Determina si el flujo debe continuar o mostrar respuesta genérica"""        
