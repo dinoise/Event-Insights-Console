@@ -1,43 +1,43 @@
 #############################
 # Web Framework & Deployment
 #############################
-flask          # Web framework
-gunicorn       # Production WSGI HTTP server for Flask apps
+flask==3.1.1                   # Web framework
+gunicorn==23.0.0               # Production WSGI HTTP server for Flask apps
 
 ##########################
 # Google Cloud SDKs
 ##########################
-google-cloud-bigquery       # BigQuery client library
-google-cloud-secret-manager # Secret Manager client library
-google-cloud-logging        # Cloud Logging client library
+google-cloud-bigquery==3.32.0       # BigQuery client library
+google-cloud-secret-manager==2.23.0 # Secret Manager client library
+google-cloud-logging==3.10.0        # Cloud Logging client library
 
 ##################
 # Utilities
 ##################
-pytz           # Timezone definitions for Python
+pytz==2025.2                  # Timezone definitions for Python
 
 ##########################
 # Database & ORM
 ##########################
-flask-sqlalchemy     # SQLAlchemy integration for Flask
-pymysql              # MySQL client library (used with SQLAlchemy)
-psycopg2-binary      # PostgreSQL client library (used with SQLAlchemy)
-pgvector             # Vector datatype for storing embeddings
+flask-sqlalchemy==3.1.1       # SQLAlchemy integration for Flask
+pymysql==1.1.1                # MySQL client library (used with SQLAlchemy)
+psycopg2-binary==2.9.10        # PostgreSQL client library (used with SQLAlchemy)
+pgvector==0.4.1               # Vector datatype for storing embeddings
 
 ##################
 # Security
 ##################
-cryptography         # Cryptographic recipes and primitives
+cryptography==44.0.3          # Cryptographic recipes and primitives
 
 ##########################
 # Serialization & Schema
 ##########################
-marshmallow-sqlalchemy  # Object serialization/deserialization with SQLAlchemy support
+marshmallow-sqlalchemy==1.4.2 # Object serialization/deserialization with SQLAlchemy support
 
 #############################
 # AI & LLM Integrations
 #############################
-langchain
-langchain-community
-langchain-google-vertexai 
-langgraph
+langchain==0.3.25
+langgraph==0.4.3
+langchain-community==0.3.24
+langchain-google-vertexai==2.0.23
