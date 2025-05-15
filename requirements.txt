@@ -38,6 +38,6 @@ marshmallow-sqlalchemy==1.4.2 # Object serialization/deserialization with SQLAlc
 # AI & LLM Integrations
 #############################
 langchain==0.3.25
-langgraph==0.4.3
+langgraph==0.4.5
 langchain-community==0.3.24
 langchain-google-vertexai==2.0.23
