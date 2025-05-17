@@ -1,16 +1,17 @@
-from json import dumps, loads
+from json import loads
 from typing import Annotated, TypedDict, Union, Dict, Any, List
 from datetime import datetime
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langchain_core.tools import StructuredTool
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.runnables import RunnableConfig
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from .assistant_template import AssistantTemplate
+from .tools_manager import tool_manager
 
 class AgentState(TypedDict):
     messages: Annotated[List[Union[HumanMessage, AIMessage]], add_messages]
@@ -21,10 +22,10 @@ class AgentState(TypedDict):
     session_data: Dict[str, Any]
 
 class UserGraph:
-    def __init__(self, llm: BaseChatModel, tools: List[StructuredTool]):
+    def __init__(self, llm: BaseChatModel):
         self.llm = llm
-        self.tools = tools
-        self.llm_with_tools = self._initialize_llm_with_tools()
+        self.tools = None
+        self.llm_with_tools = None
         self.graph = None
         self.compiled_graph = None
         self.conversation_history = []
@@ -57,6 +58,9 @@ class UserGraph:
         )
         return {
             "messages": [welcome_message],
+            "decision": {},
+            "semantic_search_result": {},
+            "data_retrived": {},
             "user_info": {},
             "session_data": {}
         }
@@ -91,13 +95,10 @@ class UserGraph:
         """Nodo optimizado para búsqueda semántica con una sola herramienta"""
         user_query = state["messages"][-1].content
 
-        consultar_tool = next(
-            tool for tool in self.tools 
-            if tool.name == "localizar_datos_cliente"
-        ) 
+        consultar_tool = tool_manager.get_tool("localizar_datos_cliente")
         
         llm_with_tool = self.llm.bind_tools(
-                self.tools,
+                [consultar_tool],
                 tool_choice={
                     "type": "function", 
                     "function": {"name": "localizar_datos_cliente"}
@@ -132,13 +133,10 @@ class UserGraph:
         """Nodo optimizado para consulta de datos con la herramienta específica"""
         semantic_search_result = state["semantic_search_result"]
         
-        consultar_tool = next(
-            tool for tool in self.tools 
-            if tool.name == "consultar_sistema_liverpool"
-        )
+        consultar_tool = tool_manager.get_tool("consultar_sistema_liverpool")
         
         llm_with_tool = self.llm.bind_tools(
-            self.tools,
+            [consultar_tool],
             tool_choice={
                 "type": "function", 
                 "function": {"name": "consultar_sistema_liverpool"}
@@ -209,7 +207,7 @@ class UserGraph:
     
     def _simple_response_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo principal del chatbot que usa la LLM"""
-        response = self.llm_with_tools.invoke(state["messages"])
+        response = self.llm.invoke(state["messages"])
         return {"messages": [response]}
     
     def _classifier_node(self, state: AgentState) -> Dict[str, Any]:
