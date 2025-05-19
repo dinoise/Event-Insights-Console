@@ -140,7 +140,7 @@ class ToolManager:
     ######################
     
     @staticmethod
-    def semantic_search(query: str, top_k: int = 1) -> dict:
+    def semantic_search(query: str, top_k: int = 1) -> list:
         """Búsqueda semántica en PostgreSQL"""
         try:
             response = requests.get(
@@ -152,7 +152,8 @@ class ToolManager:
             
             response_json = response.json()
             data = response_json.get("data", {})
-            data["query"] = query
+            for d in data:
+                d["query"] = query
 
             return data
             
@@ -187,7 +188,7 @@ class ToolManager:
             )
             response.raise_for_status()
             
-            return response.json()
+            return response.json().get("data", None)
         except requests.exceptions.RequestException as e:
             return {
                 "status": "error",

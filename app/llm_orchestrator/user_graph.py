@@ -4,7 +4,6 @@ from datetime import datetime
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from langchain_core.tools import StructuredTool
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.runnables import RunnableConfig
@@ -16,7 +15,7 @@ from .tools_manager import tool_manager
 class AgentState(TypedDict):
     messages: Annotated[List[Union[HumanMessage, AIMessage]], add_messages]
     decision: Dict[str, str]
-    semantic_search_result: str | Dict[str, str]
+    semantic_search_result: str | List[Dict[str, str]]
     data_retrived: Dict[str, str]
     user_info: Dict[str, Any]
     session_data: Dict[str, Any]
@@ -262,18 +261,22 @@ class UserGraph:
         ):
             return "end"
 
-
         try:
+            if len( semantic_search_result ) > 1:
+                return "continue"
+            
             required_keys = {"event_uuid", "target_dataset", "target_table", "query", "embedding_event_message"}
 
-            if not all(key in semantic_search_result for key in required_keys) or not semantic_search_result.get("query"):
+            single_result = semantic_search_result[0]
+
+            if not all(key in single_result for key in required_keys) or not single_result.get("query"):
                 return "end"
 
-            key_word = semantic_search_result["query"].split(" ")[-1]
+            key_word = single_result["query"].split(" ")[-1]
         except Exception:
             return "end"
         
-        return "continue" if key_word in semantic_search_result["embedding_event_message"] else "end"
+        return "continue" if key_word in single_result["embedding_event_message"] else "end"
     
     def _evaluate_decision_edge(self, state: AgentState) -> str:
         """Determina si el flujo debe continuar o mostrar respuesta genérica"""        
@@ -365,7 +368,7 @@ class UserGraph:
             config=RunnableConfig(configurable={"user_id": "some_user_id"})
         )
         
-        # Agregar respuesta al historial y actualizar estado
+        # Agregar respuesta al historial
         if result["messages"] and len(result["messages"]) > len(current_state["messages"]):
             self._add_to_history(result["messages"][-1])
         
