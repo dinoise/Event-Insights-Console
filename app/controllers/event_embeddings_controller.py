@@ -18,7 +18,7 @@ class EventEmbeddingController:
         
         response = {
             "message": "success" if results else "Search was not succesful",
-            "data": results[0] if results else None
+            "data": results if results else None
         }
 
         status = HTTPStatus.OK if results else HTTPStatus.NOT_FOUND
