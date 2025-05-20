@@ -102,7 +102,8 @@ class UserGraph:
         
         prompt = (
             "Realiza una búsqueda semántica para localizar dónde están almacenados los datos. "
-            "Te pueden pedir informacion de cliente, de pedidos o de envios:\n"
+            "Te pueden pedir informacion de cliente, de pedidos o de envios\n"
+            "Para el caso del cliente, te pueden consultar con id cliente, email (correo electrónico), nombre completo o telefono celular:\n"
             f"Consulta del usuario: '{user_query}'\n\n"
             "Instrucciones:\n"
             "1. Usa SOLO la herramienta proporcionada\n"
