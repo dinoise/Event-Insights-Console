@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional, List
 from langchain.chat_models import init_chat_model
 
 from .user_graph import UserGraph
-from .tools import initialize_tools
 
 class LLMOrchestrator:
     def __init__(self, model_name: str):
@@ -37,7 +36,7 @@ class LLMOrchestrator:
         
         print("Creting graph...")
         # Crear grafo de usuario
-        user_graph = UserGraph(llm=llm, tools=tools)
+        user_graph = UserGraph(llm=llm)
         user_graph.create_graph()
         print(f"Done!")
 
@@ -55,7 +54,7 @@ class LLMOrchestrator:
     def _initialize_tools(self) -> list:
         """Inicializa las herramientas para el agente"""
         
-        return initialize_tools()
+        return []
     
     def get_full_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Procesa un mensaje del usuario a través del grafo"""

@@ -1,30 +1,32 @@
-from json import dumps, loads
+from json import loads
 from typing import Annotated, TypedDict, Union, Dict, Any, List
 from datetime import datetime
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from langchain_core.tools import StructuredTool
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
+from langgraph.prebuilt import ToolNode, tools_condition
+
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.runnables import RunnableConfig
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from .assistant_template import AssistantTemplate
+from .tools_manager import tool_manager
 
 class AgentState(TypedDict):
     messages: Annotated[List[Union[HumanMessage, AIMessage]], add_messages]
     decision: Dict[str, str]
-    semantic_search_result: str | Dict[str, str]
+    semantic_search_result: str | List[Dict[str, str]]
     data_retrived: Dict[str, str]
     user_info: Dict[str, Any]
     session_data: Dict[str, Any]
 
 class UserGraph:
-    def __init__(self, llm: BaseChatModel, tools: List[StructuredTool]):
+    def __init__(self, llm: BaseChatModel):
         self.llm = llm
-        self.tools = tools
-        self.llm_with_tools = self._initialize_llm_with_tools()
+        self.tools = None
+        self.llm_with_tools = None
         self.graph = None
         self.compiled_graph = None
         self.conversation_history = []
@@ -57,6 +59,9 @@ class UserGraph:
         )
         return {
             "messages": [welcome_message],
+            "decision": {},
+            "semantic_search_result": {},
+            "data_retrived": {},
             "user_info": {},
             "session_data": {}
         }
@@ -91,22 +96,13 @@ class UserGraph:
         """Nodo optimizado para búsqueda semántica con una sola herramienta"""
         user_query = state["messages"][-1].content
 
-        consultar_tool = next(
-            tool for tool in self.tools 
-            if tool.name == "localizar_datos_cliente"
-        ) 
+        tool_list = tool_manager.get_tools_by_category("search")
         
-        llm_with_tool = self.llm.bind_tools(
-                self.tools,
-                tool_choice={
-                    "type": "function", 
-                    "function": {"name": "localizar_datos_cliente"}
-                }
-            )
+        llm_with_tool = self.llm.bind_tools(tool_list)
         
         prompt = (
             "Realiza una búsqueda semántica para localizar dónde están almacenados los datos. "
-            "Usa EXCLUSIVAMENTE la herramienta 'localizar_datos_cliente' con los siguientes parámetros:\n"
+            "Te pueden pedir informacion de cliente, de pedidos o de envios:\n"
             f"Consulta del usuario: '{user_query}'\n\n"
             "Instrucciones:\n"
             "1. Usa SOLO la herramienta proporcionada\n"
@@ -116,14 +112,23 @@ class UserGraph:
             "- target_dataset\n"
             "- target_table\n"
             "- query"
+            "\nHerramientas disponibles:\n"
+            f"{[tool.name for tool in tool_list]}\n"
         )
         
         response = llm_with_tool.invoke([HumanMessage(content=prompt)])
-                    
+
+        print(f"response {response}")
+
         if not response.tool_calls:
             raise ValueError("El LLM no llamó a la herramienta como se esperaba")
         
         tool_call = response.tool_calls[0]
+
+        tool_call_name = tool_call["name"]
+
+        consultar_tool = tool_manager.get_tool(tool_call_name)
+
         tool_output = consultar_tool.invoke(tool_call["args"])
         
         return { "semantic_search_result": tool_output }
@@ -132,13 +137,10 @@ class UserGraph:
         """Nodo optimizado para consulta de datos con la herramienta específica"""
         semantic_search_result = state["semantic_search_result"]
         
-        consultar_tool = next(
-            tool for tool in self.tools 
-            if tool.name == "consultar_sistema_liverpool"
-        )
+        consultar_tool = tool_manager.get_tool("consultar_sistema_liverpool")
         
         llm_with_tool = self.llm.bind_tools(
-            self.tools,
+            [consultar_tool],
             tool_choice={
                 "type": "function", 
                 "function": {"name": "consultar_sistema_liverpool"}
@@ -187,17 +189,29 @@ class UserGraph:
         response = self.llm.invoke([input_prompt])
         return {"messages": response}
     
-    def _generic_response_node(self, state: AgentState) -> Dict[str, Any]:
-        """Nodo que genera respuestas amigables cuando no hay datos"""
-        # Obtener el contexto de la conversación
+    def _direct_response_node(self, state: AgentState) -> Dict[str, Any]:
+        semantic_search_result = state["semantic_search_result"]
         conversation_context = "\n".join(
             msg.content for msg in state["messages"] 
             if isinstance(msg, HumanMessage)
         )
+
+        prompt = (
+                f"Se encontraron estos datos con busqueda semántica: \n{semantic_search_result}\n\n"
+                f"Toma los datos que coincidan con respecto a lo que pidió el cliente. Este es el contexto: {conversation_context}"
+            )
+        
+        response = self.llm.invoke(prompt)
+
+        return {"data_retrived": [response]}
+
+    def _generic_response_node(self, state: AgentState) -> Dict[str, Any]:
+        """Nodo que genera respuestas amigables cuando no hay datos"""
+        last_msg = state["messages"][-1]
         
         # Prompt especializado para respuestas genéricas
         prompt = (
-                f"El usuario solicitó:\n{conversation_context}\n\n"
+                f"El usuario solicitó:\n{last_msg}\n\n"
                 "No se encontraron resultados en la base de datos. "
                 "Por favor genera una respuesta adecuada que incluya:\n"
                 "- Disculpas por no encontrar la información\n"
@@ -209,7 +223,7 @@ class UserGraph:
     
     def _simple_response_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo principal del chatbot que usa la LLM"""
-        response = self.llm_with_tools.invoke(state["messages"])
+        response = self.llm.invoke(state["messages"])
         return {"messages": [response]}
     
     def _classifier_node(self, state: AgentState) -> Dict[str, Any]:
@@ -264,18 +278,22 @@ class UserGraph:
         ):
             return "end"
 
-
         try:
+            if len( semantic_search_result ) > 1:
+                return "direct_response"
+            
             required_keys = {"event_uuid", "target_dataset", "target_table", "query", "embedding_event_message"}
 
-            if not all(key in semantic_search_result for key in required_keys) or not semantic_search_result.get("query"):
+            single_result = semantic_search_result[0]
+
+            if not all(key in single_result for key in required_keys) or not single_result.get("query"):
                 return "end"
 
-            key_word = semantic_search_result["query"].split(" ")[-1]
+            key_word = single_result["query"].split(" ")[-1]
         except Exception:
             return "end"
         
-        return "continue" if key_word in semantic_search_result["embedding_event_message"] else "end"
+        return "continue" if key_word in single_result["embedding_event_message"] else "end"
     
     def _evaluate_decision_edge(self, state: AgentState) -> str:
         """Determina si el flujo debe continuar o mostrar respuesta genérica"""        
@@ -298,18 +316,24 @@ class UserGraph:
     # Class Functions #
     #####################
     def create_graph(self) -> None:
-        """Grafo optimizado con flujo claro"""
+        """Grafo optimizado con soporte para múltiples herramientas"""
         graph_builder = StateGraph(AgentState)
         
-        # Nodos
+        # Nodos principales
         graph_builder.add_node("classifier", self._classifier_node)
         graph_builder.add_node("simple_response", self._simple_response_node)
         graph_builder.add_node("semantic_search", self._semantic_search_node)
         graph_builder.add_node("data_retrieval", self._bigquery_search_node)
         graph_builder.add_node("format_response", self._formatter_node)
+        graph_builder.add_node("direct_response", self._direct_response_node)
         graph_builder.add_node("generic_response", self._generic_response_node)
 
-        # Edges
+        # Tool nodes
+        # searching_tools = tool_manager.get_tools_by_category("search")
+        # searching_tools_node = ToolNode(tools=searching_tools)
+        # graph_builder.add_node("searching_tools", searching_tools_node)
+
+        # Edges principales
         graph_builder.add_edge(START, "classifier")
         graph_builder.add_conditional_edges(
             "classifier",
@@ -324,9 +348,11 @@ class UserGraph:
                                             self._should_continue_edge,
                                             {
                                                 "continue": "data_retrieval",
+                                                "direct_response": "direct_response",
                                                 "end": "generic_response"
                                             })
         graph_builder.add_edge("data_retrieval", "format_response")
+        graph_builder.add_edge("direct_response", "format_response")
         graph_builder.add_edge("format_response", END)
 
         self.graph = graph_builder
@@ -336,7 +362,7 @@ class UserGraph:
         if self.graph is None:
             self.create_graph()
         self.compiled_graph = self.graph.compile()
-        # print(self.compiled_graph.get_graph().draw_mermaid())
+        print(self.compiled_graph.get_graph().draw_mermaid())
     
     def invoke_graph(self, user_input: str) -> Dict[str, Any]:
         """
@@ -367,7 +393,7 @@ class UserGraph:
             config=RunnableConfig(configurable={"user_id": "some_user_id"})
         )
         
-        # Agregar respuesta al historial y actualizar estado
+        # Agregar respuesta al historial
         if result["messages"] and len(result["messages"]) > len(current_state["messages"]):
             self._add_to_history(result["messages"][-1])
         
