@@ -102,7 +102,8 @@ class UserGraph:
         
         prompt = (
             "Realiza una búsqueda semántica para localizar dónde están almacenados los datos. "
-            "Te pueden pedir informacion de cliente, de pedidos o de envios:\n"
+            "Te pueden pedir informacion de cliente, de pedidos o de envios\n"
+            "Para el caso del cliente, te pueden consultar con id cliente, email (correo electrónico), nombre completo o telefono celular:\n"
             f"Consulta del usuario: '{user_query}'\n\n"
             "Instrucciones:\n"
             "1. Usa SOLO la herramienta proporcionada\n"
@@ -118,17 +119,15 @@ class UserGraph:
         
         response = llm_with_tool.invoke([HumanMessage(content=prompt)])
 
-        print(f"response {response}")
 
         if not response.tool_calls:
             raise ValueError("El LLM no llamó a la herramienta como se esperaba")
         
         tool_call = response.tool_calls[0]
-
         tool_call_name = tool_call["name"]
+        print(f"tool_call_name {tool_call_name}")
 
         consultar_tool = tool_manager.get_tool(tool_call_name)
-
         tool_output = consultar_tool.invoke(tool_call["args"])
         
         return { "semantic_search_result": tool_output }
@@ -172,18 +171,30 @@ class UserGraph:
     def _formatter_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que formatea la salida de herramientas a Markdown"""
         data_retrived = state["data_retrived"]
-        
+
         # Prompt más específico para el formateo
         input_prompt = (
-            "Por favor, formatea los siguientes datos como un mensaje Markdown claro y organizado "
-            "para ser mostrado al cliente de Liverpool. Usa tablas o texto estructurado "
-            "según corresponda:\n\n"
-            f"Datos a formatear: {data_retrived}\n\n"
-            "Instrucciones adicionales:\n"
-            "- Destaca los números de pedido/envío en **negrita**\n"
-            "- Usa listas para items múltiples\n"
-            "- Si hay fechas, usa formato DD/MM/YYYY\n"
-            "- Mantén un tono profesional pero amable"
+            "Por favor, formatea los siguientes datos en una o más tablas Markdown claras y organizadas, "
+            "donde las claves (keys) del JSON sean los encabezados de columna y los valores (values) sean "
+            "las filas de la tabla. Sigue estas especificaciones:\n\n"
+            "1. Estructura obligatoria:\n"
+            "   - Cada tabla debe usar sintaxis Markdown con encabezados y separadores\n"
+            "   - Ejemplo:\n"
+            "     | Key Header 1 | Key Header 2 |\n"
+            "     |--------------|--------------|\n"
+            "     | Value 1      | Value 2      |\n\n"
+            "2. Reglas de formato:\n"
+            "   - Destaca identificadores importantes (números de pedido, envío, etc.) en **negrita**\n"
+            "   - Para arrays/lista, muestra cada elemento en una nueva línea con guión\n"
+            "   - Fechas en formato DD/MM/YYYY\n"
+            "   - Valores nulos/missing como 'N/A'\n"
+            "   - Si el JSON tiene nested objects, crea tablas separadas con título descriptivo\n\n"
+            "3. Estilo:\n"
+            "   - Ton profesional pero amigable\n"
+            "   - Ordenar campos lógicamente (fechas cronológicas, de mayor a menor importancia)\n\n"
+            "Datos a formatear:\n"
+            f"{data_retrived}\n\n"
+            "NOTA: Devuelve SOLO el Markdown formateado, sin texto adicional antes o después. No es necesario que coloques las tres comillas fuertes (```)"
         )
         
         response = self.llm.invoke([input_prompt])
