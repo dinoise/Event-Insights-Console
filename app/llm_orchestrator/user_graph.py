@@ -207,15 +207,11 @@ class UserGraph:
 
     def _generic_response_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que genera respuestas amigables cuando no hay datos"""
-        # Obtener el contexto de la conversación
-        conversation_context = "\n".join(
-            msg.content for msg in state["messages"] 
-            if isinstance(msg, HumanMessage)
-        )
+        last_msg = state["messages"][-1]
         
         # Prompt especializado para respuestas genéricas
         prompt = (
-                f"El usuario solicitó:\n{conversation_context}\n\n"
+                f"El usuario solicitó:\n{last_msg}\n\n"
                 "No se encontraron resultados en la base de datos. "
                 "Por favor genera una respuesta adecuada que incluya:\n"
                 "- Disculpas por no encontrar la información\n"
