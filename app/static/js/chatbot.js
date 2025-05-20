@@ -22,9 +22,7 @@ messageInput.addEventListener('keypress', async (e) => {
 // Reset conversation
 resetButton.addEventListener('click', async (e) => {
     if (confirm('¿Estás seguro de que quieres reiniciar la conversación?')) {
-        // TODO
-        console.log("RESET")
-        // await resetConversation();
+        await resetConversation();
     }
 });
 
@@ -138,29 +136,21 @@ async function askQuestion(prompt) {
 async function resetConversation() {
     showLoading(true);
     try {
-        const response = await fetch('/reset', {
+        const response = await fetch('/api/llm/reset', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
+        }).then(() => {
+            window.location.reload()
         });
         
-        if (response.ok) {
-            // Clear chat UI (keeping the first message if you want)
-            while (chatMessages.firstChild) {
-                chatMessages.removeChild(chatMessages.firstChild);
-            }
-            // Add initial bot message
-            addMessageToUI('ai', '¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
     } catch (err) {
         console.error("Error resetting conversation:", err);
     } finally {
         showLoading(false);
     }
-}
-
-// Initialize chat with welcome message if empty
-if (chatMessages.children.length <= 1) { // Only loading indicator exists
-    addMessageToUI('ai', '¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?');
 }
