@@ -35,15 +35,81 @@ class ToolManager:
                     Reglas Estrictas:
                     1. Devuelve un json que contenga el event_uuid (el cual es diferente al id del cliente, tenlo en cuenta), 
                     el target_dataset y target_table donde están los datos. Basate en esta salida para dar la respuesta:
-                        {
+                        [{
                             "event_uuid": "cc733d33-5d67-4a46-8b84...",
                             "target_dataset": "nombre_dataset",
                             "target_table": "nombre_tabla",
                             "embedding_event_message": "id_cliente: 1901 cliente_nombres: Mario ...",
                             "query": "id cliente 1901"
-                        }
+                        }]
                 """
             },
+
+            "buscar_pedido_por_numero": {
+                "function": self.semantic_search,
+                "args_schema": PedidoNumeroInput,
+                "metadata": {"category": "search", "type": "pedido"},
+                "description": """
+                    SISTEMA DE BÚSQUEDA DE PEDIDOS - LIVERPOOL DATA LAKE
+
+                    Propósito:
+                    Busca pedidos específicos por su número de pedido en los sistemas de Liverpool.
+                    Usarse cuando te pidan un pedido por su numero
+
+                    Reglas Estrictas:
+                    - La query de entrada siempre debe comenzar con "pedido " seguido del número completo
+                    - Ejemplo: "pedido SO55951"
+                    - Devuelve un json que contenga el event_uuid (el cual es diferente al id del pedido, tenlo en cuenta), 
+                    el target_dataset y target_table donde están los datos. Basate en esta salida para dar la respuesta:
+                    [{
+                        "event_uuid": "cc733d33-5d67-4a46-8b84...",
+                        "target_dataset": "nombre_dataset",
+                        "target_table": "nombre_tabla",
+                        "embedding_event_message": "pedidos cliente: 1901 cliente_nombres: Mario ...",
+                        "query": "id cliente 1901"
+                    }]
+
+                    La herramienta automáticamente formatea la consulta correctamente.
+                    El usuario solo debe proporcionar el número de pedido.
+
+                    Ejemplos válidos:
+                    Action Input: {"numero_pedido": "SO55951", "top_k": 1}
+                """
+            },
+
+            # Nueva herramienta para buscar pedidos por cliente
+            "buscar_pedidos_por_cliente": {
+                "function": self.semantic_search,
+                "args_schema": PedidoClienteInput,
+                "metadata": {"category": "search", "type": "pedido"},
+                "description": """
+                    SISTEMA DE BÚSQUEDA DE PEDIDOS - LIVERPOOL DATA LAKE
+
+                    Propósito:
+                    Busca todos los pedidos asociados a un cliente específico.
+
+                    Reglas Estrictas:
+                    - Siempre usa "pedidos cliente " seguido del ID del cliente
+                    - Ejemplo: "pedidos cliente 1815"
+                    - Siempre trae los primeros 10 elementos
+                    - Devuelve un json que contenga el event_uuid (el cual es diferente al id del pedido, tenlo en cuenta), 
+                    el target_dataset y target_table donde están los datos. Basate en esta salida para dar la respuesta:
+                    [{
+                        "event_uuid": "cc733d33-5d67-4a46-8b84...",
+                        "target_dataset": "nombre_dataset",
+                        "target_table": "nombre_tabla",
+                        "embedding_event_message": "pedidos cliente: 1901 cliente_nombres: Mario ...",
+                        "query": "id cliente 1901"
+                    }]
+
+                    La herramienta automáticamente formatea la consulta correctamente.
+                    El usuario solo debe proporcionar el ID del cliente.
+
+                    Ejemplos válidos:
+                    Action Input: {"pedidos cliente": "1815", "top_k": 10}
+                """
+            },
+
             "consultar_sistema_liverpool": {
                 "function": self.generic_data_retrieval,
                 "args_schema": GenericQueryInput,
@@ -234,6 +300,32 @@ class GenericQueryInput(BaseModel):
         ...,
         description="Nombre de la tabla específica con los datos",
         examples=["tb_lvp_clientes_v1", "tb_pedidos_activos"]
+    )
+
+class PedidoNumeroInput(BaseModel):
+    query: str = Field(
+        ...,
+        description="Número completo del pedido a buscar (ej. SO55951)"
+    )
+    
+    top_k: Optional[int] = Field(
+        default=1,
+        description="Número máximo de resultados a devolver (por defecto 1)",
+        ge=1,
+        le=5
+    )
+
+class PedidoClienteInput(BaseModel):
+    query: str = Field(
+        ...,
+        description="""Consulta semántica para buscar datos de clientes
+                        ID del cliente para buscar sus pedidos (ej. 1815).
+                        Tiene que tener el formato 'pedidos cliente <id_cliente>'"""
+    )
+    
+    top_k: int = Field(
+        default=10,
+        description="Número máximo de resultados a devolver (por defecto 10)"
     )
 
 # Instancia global para fácil acceso
