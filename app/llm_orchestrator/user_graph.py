@@ -414,6 +414,10 @@ class UserGraph:
         """Devuelve el historial completo de la conversación"""
         return self.conversation_history
     
+    def reset_conversation(self) -> List[Dict[str, Any]]:
+        """Borra el historial de mensajes"""
+        del self.conversation_history[1:]
+    
     def get_last_message(self) -> Dict[str, Any]:
         """Devuelve el último mensaje del historial"""
         return self.conversation_history[-1]

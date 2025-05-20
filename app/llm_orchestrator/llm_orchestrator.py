@@ -18,6 +18,15 @@ class LLMOrchestrator:
     def user_session_exists(self, session_id: str) -> bool:
         """Verifica si existe una sesión de usuario"""
         return session_id in self._user_sessions
+    
+    def user_session_reset(self, session_id: str) -> bool:
+        """Verifica si existe una sesión de usuario"""
+        if not self.user_session_exists(session_id):
+            session_id = self.user_session_create()
+        
+        user_graph = self.get_user_session(session_id)
+
+        user_graph.reset_conversation()
         
     def user_session_create(self) -> str:
         """Crea una nueva sesión de usuario y devuelve su ID"""

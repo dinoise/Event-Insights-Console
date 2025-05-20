@@ -38,3 +38,24 @@ def handle_response():
     
     return jsonify( response ), HTTPStatus.OK
 
+@bp.route('/reset', methods=['POST'])
+def reset_conversation():
+    if "uuid" not in session:
+        return jsonify(
+            {
+                "error": "No session to reset"
+            }, 400
+        )
+    
+    session_uuid = session["uuid"]
+    orchestrator = current_app.orchestrator
+
+    if not orchestrator.user_session_exists(session_uuid):
+        return jsonify(
+            {
+                "error": "Current user session not found"
+            }, 500
+        )
+
+    orchestrator.user_session_reset(session_uuid)
+
