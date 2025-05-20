@@ -29,7 +29,11 @@ class ToolManager:
                     Devuelve el como respuesta el JSON de salida de la funcion. Esto para pasar esta informacion al siguiente nodo
 
                     Capacidades:
-                    - Busca por: ID, nombre, teléfono o email
+                    - La query de entrada siempre debe comenzar con "cliente " seguido del parametro de busqueda y el valor
+                        - Ejemplo: "cliente id_cliente 12345"
+                        - Ejemplo: "cliente cliente_email_principal ejemplo@falso.com"
+                        - Ejemplo: "cliente cliente_no_celular 5566778899"
+                        - Ejemplo: "cliente cliente_nombres Juan Perez"
                     - Identifica el dataset y tabla exactos donde se almacenan los datos
 
                     Reglas Estrictas:
@@ -269,12 +273,10 @@ class SemanticSearchInput(BaseModel):
     query: str = Field(
         ...,
         description="""Consulta semántica para buscar datos de clientes. Puede ser:
-        - ID de cliente (ej. 1999, 2000)
-        - Nombre completo o parcial (ej. Luis Hernandez, Juan Martinez)
-        - Número telefónico (ej. 5544332211)
-        - Email (ej. example@gmail.com)""",
-        min_length=2,
-        max_length=100
+        - ID de cliente (Ejemplo: "id_cliente 12345")
+        - Nombre completo o parcial (Ejemplo: "cliente_nombres Juan Perez")
+        - Número telefónico ("cliente_no_celular 5566778899")
+        - Email ("cliente_email_principal ejemplo@falso.com")"""
     )
     
     top_k: Optional[int] = Field(

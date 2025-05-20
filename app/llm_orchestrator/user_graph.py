@@ -118,17 +118,15 @@ class UserGraph:
         
         response = llm_with_tool.invoke([HumanMessage(content=prompt)])
 
-        print(f"response {response}")
 
         if not response.tool_calls:
             raise ValueError("El LLM no llamó a la herramienta como se esperaba")
         
         tool_call = response.tool_calls[0]
-
         tool_call_name = tool_call["name"]
+        print(f"tool_call_name {tool_call_name}")
 
         consultar_tool = tool_manager.get_tool(tool_call_name)
-
         tool_output = consultar_tool.invoke(tool_call["args"])
         
         return { "semantic_search_result": tool_output }
@@ -172,7 +170,7 @@ class UserGraph:
     def _formatter_node(self, state: AgentState) -> Dict[str, Any]:
         """Nodo que formatea la salida de herramientas a Markdown"""
         data_retrived = state["data_retrived"]
-                
+
         # Prompt más específico para el formateo
         input_prompt = (
             "Por favor, formatea los siguientes datos en una o más tablas Markdown claras y organizadas, "
@@ -195,7 +193,7 @@ class UserGraph:
             "   - Ordenar campos lógicamente (fechas cronológicas, de mayor a menor importancia)\n\n"
             "Datos a formatear:\n"
             f"{data_retrived}\n\n"
-            "NOTA: Devuelve SOLO el Markdown formateado, sin texto adicional antes o después."
+            "NOTA: Devuelve SOLO el Markdown formateado, sin texto adicional antes o después. No es necesario que coloques las tres comillas fuertes (```)"
         )
         
         response = self.llm.invoke([input_prompt])
