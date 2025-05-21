@@ -174,15 +174,8 @@ class UserGraph:
 
         # Prompt más específico para el formateo
         input_prompt = (
-            "Por favor, formatea los siguientes datos en una o más tablas Markdown claras y organizadas, "
-            "donde las claves (keys) del JSON sean los encabezados de columna y los valores (values) sean "
-            "las filas de la tabla. Sigue estas especificaciones:\n\n"
-            "1. Estructura obligatoria:\n"
-            "   - Cada tabla debe usar sintaxis Markdown con encabezados y separadores\n"
-            "   - Ejemplo:\n"
-            "     | Key Header 1 | Key Header 2 |\n"
-            "     |--------------|--------------|\n"
-            "     | Value 1      | Value 2      |\n\n"
+            "1. Parse the incoming JSON file, identify headers and columns"
+            "using the headers and columns create a markdown table with the contents of the json file"
             "2. Reglas de formato:\n"
             "   - Destaca identificadores importantes (números de pedido, envío, etc.) en **negrita**\n"
             "   - Para arrays/lista, muestra cada elemento en una nueva línea con guión\n"
@@ -190,7 +183,7 @@ class UserGraph:
             "   - Valores nulos/missing como 'N/A'\n"
             "   - Si el JSON tiene nested objects, crea tablas separadas con título descriptivo\n\n"
             "3. Estilo:\n"
-            "   - Ton profesional pero amigable\n"
+            "   - Tono profesional pero amigable\n"
             "   - Ordenar campos lógicamente (fechas cronológicas, de mayor a menor importancia)\n\n"
             "Datos a formatear:\n"
             f"{data_retrived}\n\n"
