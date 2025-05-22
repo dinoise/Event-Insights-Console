@@ -183,11 +183,10 @@ class UserGraph:
             "   - Valores nulos/missing como 'N/A'\n"
             "   - Si el JSON tiene nested objects, crea tablas separadas con título descriptivo\n\n"
             "3. Estilo:\n"
-            "   - Tono profesional pero amigable\n"
-            "   - Ordenar campos lógicamente (fechas cronológicas, de mayor a menor importancia)\n\n"
+            "   - Tono profesional y amigable\n"
             "Datos a formatear:\n"
             f"{data_retrived}\n\n"
-            "NOTA: Devuelve SOLO el Markdown formateado, sin texto adicional antes o después. No es necesario que coloques las tres comillas fuertes (```)"
+            "Devuelve SOLO Markdown formateado, sin texto adicional antes o después. No es necesario que coloques las tres comillas fuertes (```)"
         )
         
         response = self.llm.invoke([input_prompt])
