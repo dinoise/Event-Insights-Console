@@ -176,6 +176,8 @@ class UserGraph:
         input_prompt = (
             "1. Parse the incoming JSON file, identify headers and columns"
             "using the headers and columns create a markdown table with the contents of the json file"
+            "Remove underscores from the column names and rename the columns to a human readable name in spanish "
+            "transponse the columns into horizontal to display the columns and the values across"
             "2. Reglas de formato:\n"
             "   - Destaca identificadores importantes (números de pedido, envío, etc.) en **negrita**\n"
             "   - Para arrays/lista, muestra cada elemento en una nueva línea con guión\n"
