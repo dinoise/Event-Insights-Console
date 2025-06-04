@@ -41,7 +41,9 @@ async function submitMessage() {
     try {
         // Prompt LLM
         const answer = await askQuestion(msg);
-         
+        
+        console.info( "ANSWER ", answer )
+
         // Add response to UI
         addMessageToUI(answer.type, answer.content);
     } catch (err) {

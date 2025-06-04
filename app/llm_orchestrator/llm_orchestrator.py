@@ -1,6 +1,5 @@
 import uuid
 from typing import Any, Dict, Optional, List
-from google.cloud import aiplatform
 from vertexai import agent_engines
 
 class LLMOrchestrator:
@@ -42,6 +41,39 @@ class LLMOrchestrator:
         remote_session = self.remote_app.create_session(user_id=session_id)
         return remote_session
     
+    def _extract_response_text(self, response_events: List[Dict[str, Any]]) -> str:
+        """
+        Extrae el texto de respuesta de los eventos ADK basado en la estructura:
+        {
+            'content': {
+                'parts': [{
+                    'text': 'Original Character Count: 4\nNew Character Count: 3\nNew message: Hi!\n'
+                }],
+                'role': 'model'
+            },
+            ...
+        }
+        """
+        if not response_events:
+            return "No recibí respuesta del agente"
+        
+        last_event = response_events[-1]
+        
+        try:
+            # Extraer el texto principal
+            content = last_event.get('content', {})
+            parts = content.get('parts', [{}])
+            if not parts:
+                return "Respuesta sin contenido"
+            
+            full_text = parts[0].get('text', '').strip()
+            
+            return full_text
+            
+        except Exception as e:
+            print(f"Error extrayendo texto de respuesta: {e}")
+            return "Hubo un error procesando la respuesta"
+            
     def process_message(self, session_id: str, user_input: str) -> Dict[str, Any]:
         """Envía un mensaje al agente ADK y procesa la respuesta"""
         if not self.user_session_exists(session_id):
@@ -50,20 +82,44 @@ class LLMOrchestrator:
         remote_session = self.get_user_session(session_id)
         
         # Enviar mensaje al agente remoto
-        response_content = []
-        for event in self.remote_app.stream_query(
-            user_id=session_id,
-            session_id=remote_session['id'],
-            message=user_input,
-        ):
-            response_content.append(str(event))
-        
-        # Formatear respuesta similar a tu estructura actual
-        return {
-            "type": "ai",
-            "content": "\n".join(response_content),
-            "metadata": {}
-        }
+        response_events = []
+        try:
+            for event in self.remote_app.stream_query(
+                user_id=session_id,
+                session_id=remote_session['id'],
+                message=user_input,
+            ):
+                print("EVENT ===> ", event)
+                response_events.append(event)
+            
+            # Extraer texto de respuesta
+            response_text = self._extract_response_text(response_events)
+            
+            # Registrar en historial
+            # session_data['history'].append({
+            #     'type': 'human',
+            #     'content': user_input,
+            #     'timestamp': datetime.now().isoformat()
+            # })
+            # session_data['history'].append({
+            #     'type': 'ai',
+            #     'content': response_text,
+            #     'timestamp': datetime.now().isoformat()
+            # })
+            
+            return {
+                "type": "ai",
+                "content": response_text,
+                "metadata": {}
+            }
+            
+        except Exception as e:
+            print(f"Error en process_message: {e}")
+            return {
+                "type": "error",
+                "data": "Lo siento, ocurrió un error al procesar tu mensaje",
+                "metadata": {"error": str(e)}
+            }
 
     def get_full_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Obtiene el historial de la conversación"""
