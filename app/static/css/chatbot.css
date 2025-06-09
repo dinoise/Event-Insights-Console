@@ -1,17 +1,18 @@
 :root {
-    --primary-color: #e4418c;
-    --primary-dark: #c42a75;
-    --primary-light: #f8a5c9;
-    --text-color: #1a1a1a;
-    --text-light: #666;
-    --bg-color: #ffffff;
-    --bg-secondary: #f7f7f8;
-    --ai-message-bg: #f7f7f8;
-    --user-message-bg: #e4418c;
-    --user-message-text: #ffffff;
+    --primary-color: #007bff;         /* Generic blue */
+    --primary-dark: #0056b3;          /* Darker blue */
+    --primary-light: #cce5ff;         /* Light blue background */
+    --text-color: #212529;            /* Dark gray for text */
+    --text-light: #6c757d;            /* Lighter gray for secondary text */
+    --bg-color: #ffffff;              /* White background */
+    --bg-secondary: #f8f9fa;          /* Light gray background */
+    --ai-message-bg: #f1f3f5;         /* Subtle gray for AI messages */
+    --user-message-bg: #007bff;       /* User message with primary color */
+    --user-message-text: #ffffff;     /* White text on user messages */
     --border-radius: 12px;
     --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
 
 * {
     margin: 0;
@@ -97,8 +98,9 @@ body {
 }
 
 .logo {
-    height: 32px;
     width: auto;
+    font-size: 38px;
+    color: var(--primary-color);
 }
 
 .chat-header h1 {
