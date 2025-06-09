@@ -5,6 +5,26 @@ const resetButton = document.getElementById('resetButton');
 const chatMessages = document.getElementById('chatMessages');
 const loadingIndicator = document.getElementById('loadingIndicator');
 
+const toggleButton = document.getElementById('darkModeToggle');
+
+// Check if the user has a saved preference
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+} else {
+    document.body.classList.remove('dark-mode');
+}
+
+toggleButton.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+
+    // Save preference in localStorage
+    if (document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme', 'dark');
+    } else {
+        localStorage.setItem('theme', 'light');
+    }
+});
+
 // Submit chat message via click
 sendButton.addEventListener('click', async (e) => {
     if (messageInput.value.trim() !== '') {

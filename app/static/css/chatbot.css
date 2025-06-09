@@ -1,18 +1,35 @@
 :root {
-    --primary-color: #007bff;         /* Generic blue */
-    --primary-dark: #0056b3;          /* Darker blue */
-    --primary-light: #cce5ff;         /* Light blue background */
-    --text-color: #212529;            /* Dark gray for text */
-    --text-light: #6c757d;            /* Lighter gray for secondary text */
-    --bg-color: #ffffff;              /* White background */
-    --bg-secondary: #f8f9fa;          /* Light gray background */
-    --ai-message-bg: #f1f3f5;         /* Subtle gray for AI messages */
-    --user-message-bg: #007bff;       /* User message with primary color */
-    --user-message-text: #ffffff;     /* White text on user messages */
+    --primary-color: #007bff;
+    --primary-dark: #0056b3;
+    --primary-light: #cce5ff;
+    --text-color: #212529;
+    --text-light: #6c757d;
+    --bg-color: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --ai-message-bg: #f1f3f5;
+    --user-message-bg: #007bff;
+    --user-message-text: #ffffff;
     --border-radius: 12px;
     --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+.dark-mode {
+  --primary-color: #0d6efd;
+  --primary-dark: #084298;
+  --primary-light: #3b8bff;
+
+  --text-color: #f8f9fa;
+  --text-light: #adb5bd;
+
+  --bg-color: #121212;
+  --bg-secondary: #1e1e1e;
+
+  --ai-message-bg: #2a2a2a;
+  --user-message-bg: #0d6efd;
+  --user-message-text: #ffffff;
+
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
 
 * {
     margin: 0;
