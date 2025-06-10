@@ -153,6 +153,11 @@ body {
     flex-direction: column;
 }
 
+#chatMain {
+    overflow-y: auto;
+    max-height: 100%;
+}
+
 .chat-messages {
     max-width: 800px;
     width: 100%;

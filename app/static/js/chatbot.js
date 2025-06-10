@@ -2,10 +2,10 @@
 const sendButton = document.getElementById('sendButton');
 const messageInput = document.getElementById('messageInput');
 const resetButton = document.getElementById('resetButton');
-const chatMessages = document.getElementById('chatMessages');
-const loadingIndicator = document.getElementById('loadingIndicator');
-
 const toggleButton = document.getElementById('darkModeToggle');
+const chatMessages = document.getElementById('chatMessages');
+const chatMain = document.getElementById('chatMain');
+const loadingIndicator = document.getElementById('loadingIndicator');
 
 // Check if the user has a saved preference
 if (localStorage.getItem('theme') === 'dark') {
@@ -133,7 +133,9 @@ function showLoading(show) {
 
 // Scroll chat to bottom
 function scrollToBottom() {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    requestAnimationFrame(() => {
+        chatMain.scrollTop = chatMain.scrollHeight;
+    });
 }
 
 // Send request to backend
