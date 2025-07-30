@@ -41,38 +41,33 @@ class LLMOrchestrator:
         remote_session = self.remote_app.create_session(user_id=session_id)
         return remote_session
     
-    def _extract_response_text(self, response_events: List[Dict[str, Any]]) -> str:
-        """
-        Extrae el texto de respuesta de los eventos ADK basado en la estructura:
-        {
-            'content': {
-                'parts': [{
-                    'text': 'Original Character Count: 4\nNew Character Count: 3\nNew message: Hi!\n'
-                }],
-                'role': 'model'
-            },
-            ...
-        }
-        """
-        if not response_events:
-            return "No recibí respuesta del agente"
+    def _extract_response_text(self, response_events):
+        """Extrae texto de respuesta y busca imágenes en los eventos"""
+        response_text = ""
+        image_data = []
         
-        last_event = response_events[-1]
+        for event in response_events:
+            # Buscar texto en las partes del contenido
+            if 'content' in event and 'parts' in event['content']:
+                for part in event['content']['parts']:
+                    if 'text' in part:
+                        response_text += part['text'] + "\n"
+
+            if 'actions' in event and 'artifact_delta' in event['actions']:
+                artifacts = event['actions']['artifact_delta']
+                print("artifact delta", artifacts)
+                for artifact_name, artifact_value in artifacts.items():
+                    print("artifact_name", artifact_name)
+                    image_data.append(artifact_name)
         
-        try:
-            # Extraer el texto principal
-            content = last_event.get('content', {})
-            parts = content.get('parts', [{}])
-            if not parts:
-                return "Respuesta sin contenido"
-            
-            full_text = parts[0].get('text', '').strip()
-            
-            return full_text
-            
-        except Exception as e:
-            print(f"Error extrayendo texto de respuesta: {e}")
-            return "Hubo un error procesando la respuesta"
+        if image_data:
+            # Si encontramos una imagen, la devolvemos junto con el texto
+            return {
+                "text": response_text.strip(),
+                "image": image_data  # Esto sería los datos binarios de la imagen
+            }
+        
+        return response_text.strip()
             
     def process_message(self, session_id: str, user_input: str) -> Dict[str, Any]:
         """Envía un mensaje al agente ADK y procesa la respuesta"""
@@ -92,27 +87,26 @@ class LLMOrchestrator:
                 print("EVENT ===> ", event)
                 response_events.append(event)
             
-            # Extraer texto de respuesta
-            response_text = self._extract_response_text(response_events)
+            # Extraer respuesta (puede incluir texto e imagen)
+            response = self._extract_response_text(response_events)
             
-            # Registrar en historial
-            # session_data['history'].append({
-            #     'type': 'human',
-            #     'content': user_input,
-            #     'timestamp': datetime.now().isoformat()
-            # })
-            # session_data['history'].append({
-            #     'type': 'ai',
-            #     'content': response_text,
-            #     'timestamp': datetime.now().isoformat()
-            # })
-            
-            return {
-                "type": "ai",
-                "content": response_text,
-                "metadata": {}
-            }
-            
+            if isinstance(response, dict) and 'image' in response:
+                # Si hay imagen, devolverla junto con el texto
+                return {
+                    "type": "ai",
+                    "content": response["text"],
+                    "contentType": "img",
+                    "image": response["image"],
+                    "metadata": {}
+                }
+            else:
+                # Solo texto
+                return {
+                    "type": "ai",
+                    "content": response,
+                    "metadata": {}
+                }
+                
         except Exception as e:
             print(f"Error en process_message: {e}")
             return {
