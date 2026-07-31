@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 8080
 
 # Ejecuta la aplicación con Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "300", "--workers", "2", "app.main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "8", "--timeout", "300", "app.main:app"]

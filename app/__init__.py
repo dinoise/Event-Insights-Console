@@ -62,7 +62,7 @@ def create_app(config_name):
 
     # Init the orchestrator for the LLM
     app.secret_key = environ.get('SECRET_KEY', None)
-    app.orchestrator = LLMOrchestrator(model_name=app.config.get("MODEL_NAME"))
+    app.orchestrator = LLMOrchestrator(resource_id=app.config.get("AGENT_ENGINE_ID"))
 
     # Init embed service
     set_llm_cache(InMemoryCache())

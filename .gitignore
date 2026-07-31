@@ -6,6 +6,7 @@ venv/
 env/
 .Python
 pip-selfcheck.json
+.python-version
 
 ####################
 # Python Files #

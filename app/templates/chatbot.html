@@ -4,32 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot</title>
-    <link href="{{ url_for('static', filename='css/chatbot.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/chatbot.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="dark-mode">
     <div class="chat-container">
         <header class="chat-header">
             <div class="header-content">
                 <div class="logo-container">
-                    <img src="{{ url_for('static', filename='imgs/lvp-logo.png') }}" alt="Logo" class="logo">
+                    <span class="material-icons-round logo">smart_toy</span>
                     <h1>Asistente Virtual</h1>
                 </div>
                 <div class="header-actions">
+                    <!-- Redirect to Home Button -->
                     <a href="/" class="home-button">
                         <span class="material-icons-round">home</span>
                         <span class="button-text">Inicio</span>
                     </a>
+                    <!-- Reset Chat Button -->
                     <button id="resetButton" class="icon-button">
                         <span class="material-icons-round">refresh</span>
+                    </button>
+                    <!-- Dark Mode Toggle Button -->
+                    <button id="darkModeToggle" class="icon-button" title="Modo oscuro">
+                        <span class="material-icons-round">dark_mode</span>
                     </button>
                 </div>
             </div>
         </header>
 
-        <main class="chat-main">
+        <main class="chat-main" id="chatMain">
             <div class="chat-messages" id="chatMessages">
                 {# Historial del chat #}
                 {% if messages %}

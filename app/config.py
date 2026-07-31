@@ -11,6 +11,7 @@ class Config:
 
     MODEL_NAME = getenv("MODEL_NAME")
     EMBEDDING_MODEL_NAME = getenv("EMBEDDING_MODEL_NAME")
+    AGENT_ENGINE_ID = getenv("AGENT_ENGINE_ID")
     
 class DevelopmentConfig(Config):
     """Configurations for development"""
